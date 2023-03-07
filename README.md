@@ -17,4 +17,13 @@ Build a blockchain from scratch to understand what compromise a chain-designer h
 - C5 chan []Input. ClientHandler -> Gossip
 - C6 chan Block. Consensus -> Logic
 
+## Data type
+- Peer
+- Input
+- Block
+- BlockHash
+- Mempool
+
 ## Description
+
+
