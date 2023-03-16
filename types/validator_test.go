@@ -16,7 +16,7 @@ func TestValidatorStartStop(t *testing.T) {
 
 	// Start the validator and wait for a short duration
 	v.Start()
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 
 	// Stop the validator
 	v.Stop()

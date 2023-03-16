@@ -1,13 +1,18 @@
 package types
 
 import (
-	"math/rand"
+	"context"
 	"encoding/json"
+	// "flag"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	// "time"
 
 	"github.com/gorilla/websocket"
 )
@@ -58,6 +63,12 @@ type Validator interface {
 
 	// Stop validator's server
 	StopServer()
+
+	// Add a new peer to the validator
+	AddPeer(peer string)
+
+	// Get port
+	Port() int
 }
 
 type validator struct {
@@ -74,6 +85,7 @@ type validator struct {
 	clientsMutex sync.Mutex
 	clients      map[*websocket.Conn]bool
 	peers 	  	 []string
+	stopServer   func()
 }
 
 
@@ -126,22 +138,24 @@ func (v *validator) Stop() {
 }
 
 func (v *validator) StartClient() {
-	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:"+strconv.Itoa(v.port), nil)
+	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:"+strconv.Itoa(v.port) +"/ws", nil)
 	if err != nil {
 		fmt.Println("Error connecting to the server:", err)
 		return
 	}
 	defer conn.Close()
 
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+	log.Println("Connected to the server")
 
-	for {
-		select {
-		case <-ticker.C:
-			v.checkForAvailableValidators()
-		}
-	}
+	// ticker := time.NewTicker(1 * time.Second)
+	// defer ticker.Stop()
+
+	// for {
+	// 	select {
+	// 	case <-ticker.C:
+	// 		v.checkForAvailableValidators()
+	// 	}
+	// }
 }
 
 func (v *validator) StopClient() {
@@ -154,42 +168,80 @@ func (v *validator) StopClient() {
 }
 
 func (v *validator) StartServer() {
+	// Create a new Gorilla WebSocket upgrader
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+	// Create a new http.ServeMux for this validator
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", v.handleConnections)
-	v.httpServer = &http.Server{Addr: ":" + strconv.Itoa(v.port), Handler: mux}
-	err := v.httpServer.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		fmt.Println("Error starting the server:", err)
+
+	// Set up the WebSocket endpoint for this validator
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Printf("Error upgrading HTTP to WebSocket: %v", err)
+			return
+		}
+		defer conn.Close()
+
+		// Add the connection to the clients map
+		v.clientsMutex.Lock()
+		v.clients[conn] = true
+		v.clientsMutex.Unlock()
+
+		// Handle incoming messages from this connection
+		v.handleConnections(conn)
+	})
+
+	// Create an HTTP server
+	v.httpServer = &http.Server{
+		Addr:    fmt.Sprintf("localhost:%d", v.port),
+		Handler: mux,
+	}
+
+	go func() {
+		// Start the HTTP server
+		log.Printf("Validator %s starting server on port %d", v.validatorId, v.port)
+		if err := v.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("Error starting server: %v", err)
+		}
+	}()
+
+	v.stopServer = func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := v.httpServer.Shutdown(ctx); err != nil {
+			log.Printf("Error stopping server: %v", err)
+		}
 	}
 }
-
-func (v *validator) StopServer() {
-	// write code in here
-	if err := v.httpServer.Close(); err != nil {
-		fmt.Println("Error stopping the server:", err)
-	}
-}
-
-func (v *validator) handleConnections(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.Upgrader{}
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println("Error upgrading the connection:", err)
-		return
-	}
+func (v *validator) handleConnections(conn *websocket.Conn) {
 	defer conn.Close()
-
-	v.clientsMutex.Lock()
-	v.clients[conn] = true
-	v.clientsMutex.Unlock()
 
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			delete(v.clients, conn)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("Error reading message: %v", err)
+			}
 			break
 		}
+
 		v.handleMessage(msg)
+	}
+}
+
+
+func (v *validator) StopServer() {
+	if v.stopServer != nil {
+		log.Printf("Validator %s stopping server on port %d", v.validatorId, v.port)
+		v.stopServer()
 	}
 }
 
@@ -252,4 +304,12 @@ func NewValidator(port int) Validator {
 		clients:     make(map[*websocket.Conn]bool),
 		peers:       []string{},
 	}
+}
+
+func (v *validator) AddPeer(peer string) {
+	v.peers = append(v.peers, peer)
+}
+
+func (v *validator) Port() int {
+	return v.port
 }
