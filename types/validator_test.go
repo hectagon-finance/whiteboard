@@ -16,7 +16,9 @@ func TestValidatorStartStop(t *testing.T) {
 
 	// Start the validator and wait for a short duration
 	v.Start()
-	time.Sleep(4 * time.Second)
+
+	// Wait for a short time to allow the server to start
+	time.Sleep(2 * time.Second)
 
 	// Stop the validator
 	v.Stop()
@@ -25,23 +27,8 @@ func TestValidatorStartStop(t *testing.T) {
 }
 
 func TestValidatorSendMessage(t *testing.T) {
-	// Create a dummy MemPool and Block for testing purposes
-	memPool := NewMemPool()
-	// block := NewBlock()
-
-	// Initialize two new validators
-	v1 := &validator{
-		validatorId: "validator-1",
-		publicKey:   "public-key-1",
-		privateKey:  "private-key-1",
-		memPool:     memPool,
-		balance:     1000,
-		stake:       100,
-		status:      "inactive",
-		port:        8081,
-		clients:     make(map[*websocket.Conn]bool),
-		peers:       []string{},
-	}
+	// Initialize a new validator
+	v1 := NewValidator(8081)
 
 	// Use a wait group to make sure the validator is started before connecting the test client
 	var wg sync.WaitGroup
@@ -55,7 +42,7 @@ func TestValidatorSendMessage(t *testing.T) {
 	wg.Wait()
 
 	// Wait for v1 to start the server
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// Connect a test client to the validator
 	u := url.URL{Scheme: "ws", Host: "localhost:8081", Path: "/ws"}

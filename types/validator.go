@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	// "time"
 
 	"github.com/gorilla/websocket"
 )
@@ -59,7 +58,7 @@ type Validator interface {
 	StopClient()
 
 	// Start validator's server
-	StartServer()
+	StartServer(ready chan bool)
 
 	// Stop validator's server
 	StopServer()
@@ -127,7 +126,9 @@ func (v *validator) LastBlockHash() string {
 
 func (v *validator) Start() {
 	v.status = "active"
-	go v.StartServer()
+	ready := make(chan bool)
+	go v.StartServer(ready)
+	<-ready
 	go v.StartClient()
 }
 
@@ -147,15 +148,15 @@ func (v *validator) StartClient() {
 
 	log.Println("Connected to the server")
 
-	// ticker := time.NewTicker(1 * time.Second)
-	// defer ticker.Stop()
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
-	// for {
-	// 	select {
-	// 	case <-ticker.C:
-	// 		v.checkForAvailableValidators()
-	// 	}
-	// }
+	for {
+		select {
+		case <-ticker.C:
+			v.checkForAvailableValidators()
+		}
+	}
 }
 
 func (v *validator) StopClient() {
@@ -167,7 +168,7 @@ func (v *validator) StopClient() {
 	v.clientsMutex.Unlock()
 }
 
-func (v *validator) StartServer() {
+func (v *validator) StartServer(ready chan bool) {
 	// Create a new Gorilla WebSocket upgrader
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -207,6 +208,7 @@ func (v *validator) StartServer() {
 	go func() {
 		// Start the HTTP server
 		log.Printf("Validator %s starting server on port %d", v.validatorId, v.port)
+		ready <- true
 		if err := v.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("Error starting server: %v", err)
 		}
@@ -282,12 +284,12 @@ func (v *validator) handleMessage(msg []byte) {
 		fmt.Println("Error unmarshaling the message:", err)
 		return
 	}
-	fmt.Println(v.validatorId,": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
+	fmt.Println("Validator",v.validatorId,": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
 }
 
 func NewValidator(port int) Validator {
 	id := rand.Intn(1000)
-	validatorId := "test-validator-"+strconv.Itoa(id)
+	validatorId := strconv.Itoa(id)
 	publicKey := "public-key"
 	privateKey := "private-key"
 	memPool := NewMemPool()

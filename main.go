@@ -13,7 +13,7 @@ func main() {
 	v.Start()
 
 	// // Wait for a short time to allow the server to start
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// Stop the validator
 	v.Stop()
