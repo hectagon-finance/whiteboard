@@ -1,10 +1,3 @@
-// Copyright 2015 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-//go:build ignore
-// +build ignore
-
 package main
 
 import (
@@ -53,6 +46,10 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		if err := dec.Decode(&m); err != nil {
 			log.Fatal(err)
 		}
+
+		log.Println(m.SigNature)
+		log.Println(m.PublicKey)
+		log.Println(m.Data)
 
 		oke := m.SigNature.Verify(m.PublicKey, m.Data)
 		log.Println(oke)
