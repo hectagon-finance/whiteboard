@@ -59,3 +59,13 @@ func NewTransaction(transactionId string, publicKey string, signature string, ha
 		hash: hash,
 	}
 }
+
+func FakeTransaction() Transaction {
+	return &transaction{
+		transactionId: "real",
+		publicKey: "fake",
+		timestamp: time.Now().UnixNano(),
+		signature: "fake",
+		hash: "fake",
+	}
+}

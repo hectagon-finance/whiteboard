@@ -3,15 +3,16 @@ package types
 import (
 	"context"
 	"encoding/json"
-	// "flag"
+
 	"fmt"
 	"log"
-	"math/rand"
+
+	// "math/rand"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
-
 
 	"github.com/gorilla/websocket"
 )
@@ -68,6 +69,12 @@ type Validator interface {
 
 	// Get port
 	Port() int
+
+	// Validate a transaction
+	ValidateTransaction(tx Transaction) bool
+
+	// broadcast a transaction to all peers
+	broadcastTransaction(tx Transaction)
 }
 
 type validator struct {
@@ -139,22 +146,28 @@ func (v *validator) Stop() {
 }
 
 func (v *validator) StartClient() {
-	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:"+strconv.Itoa(v.port) +"/ws", nil)
-	if err != nil {
-		fmt.Println("Error connecting to the server:", err)
-		return
-	}
-	defer conn.Close()
+	u := url.URL{Scheme: "ws", Host: "localhost:" + strconv.Itoa(v.port), Path: "/ws"}
 
-	log.Println("Connected to the server")
-
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
+	// Retry connecting to the server with a delay
 	for {
-		select {
-		case <-ticker.C:
-			v.checkForAvailableValidators()
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		if err != nil {
+			fmt.Println("Error connecting to the server, retrying in 1 second:", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		defer conn.Close()
+		log.Println("Connected to the server")
+
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				v.checkForAvailableValidators()
+			}
 		}
 	}
 }
@@ -247,26 +260,48 @@ func (v *validator) StopServer() {
 	}
 }
 
-func (v *validator) checkForAvailableValidators() {
+func (v *validator) ConnectAndSendMessage(message map[string]interface{}) {
+	v.clientsMutex.Lock()
+	defer v.clientsMutex.Unlock()
+
 	for _, peer := range v.peers {
-		conn, _, err := websocket.DefaultDialer.Dial("ws://"+peer, nil)
+		// Check if the peer is already connected
+		isConnected := false
+		for conn := range v.clients {
+			if conn.RemoteAddr().String() == "localhost:"+peer {
+				isConnected = true
+				break
+			}
+		}
+		if isConnected {
+			continue
+		}
+
+		u := url.URL{Scheme: "ws", Host: "localhost:" + peer, Path: "/ws"}
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 		if err != nil {
 			fmt.Println("Error connecting to the peer:", err)
 			continue
 		}
 		defer conn.Close()
 
-		v.clientsMutex.Lock()
 		v.clients[conn] = true
-		v.clientsMutex.Unlock()
 
-		message := map[string]interface{}{
-			"validatorId": v.validatorId,
-			"message":     "Hello, I'm validator " + v.validatorId,
-		}
 		v.sendMessage(conn, message)
 	}
 }
+
+func (v *validator) checkForAvailableValidators() {
+
+	message := map[string]interface{}{
+			"type":        "hello",
+			"validatorId": v.validatorId,
+			"message":     "Hello, I'm validator " + v.validatorId,
+	}
+	
+	v.ConnectAndSendMessage(message)
+}
+
 
 func (v *validator) sendMessage(conn *websocket.Conn, message map[string]interface{}) {
 	msg, err := json.Marshal(message)
@@ -277,6 +312,7 @@ func (v *validator) sendMessage(conn *websocket.Conn, message map[string]interfa
 	conn.WriteMessage(websocket.TextMessage, msg)
 }
 
+
 func (v *validator) handleMessage(msg []byte) {
 	var message map[string]interface{}
 	err := json.Unmarshal(msg, &message)
@@ -284,12 +320,68 @@ func (v *validator) handleMessage(msg []byte) {
 		fmt.Println("Error unmarshaling the message:", err)
 		return
 	}
-	fmt.Println("Validator",v.validatorId,": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
+
+	switch message["type"].(string) {
+
+	case "hello":
+		fmt.Println("Validator", v.validatorId, ": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
+	case "transaction":
+		tx := &transaction{
+				transactionId: message["transactionId"].(string),
+				publicKey:     message["publicKey"].(string),
+				timestamp:     int64(message["timestamp"].(float64)),
+				signature:     message["signature"].(string),
+				hash:          message["hash"].(string),
+			}
+		if v.ValidateTransaction(tx) {
+			fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
+			v.broadcastTransaction(tx)
+			v.MemPool().AddTransaction(tx)
+			fmt.Println(v.MemPool().Size())
+		} else {
+			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
+		}
+	default:
+		fmt.Println("Default")
+	}
+}
+
+func (v *validator) broadcastTransaction(tx Transaction) {
+	message := map[string]interface{}{
+		"type":          "transaction",
+		"from":          "validator",
+		"validatorId":   v.validatorId,
+		"transactionId": tx.Id(),
+		"publicKey":     tx.PublicKey(),
+		"timestamp":     tx.Timestamp(),
+		"signature":     tx.Signature(),
+		"hash":          tx.Hash(),
+	}
+
+	v.ConnectAndSendMessage(message)
+}
+
+
+func (v *validator) ValidateTransaction(tx Transaction) bool {
+	for i := range v.memPool.GetTransactions(){
+		if v.memPool.GetTransactions()[i].Id() == tx.Id(){
+			return false
+		}
+	}
+	return true
+}
+
+func (v *validator) AddPeer(peer string) {
+	v.peers = append(v.peers, peer)
+}
+
+func (v *validator) Port() int {
+	return v.port
 }
 
 func NewValidator(port int) Validator {
-	id := rand.Intn(1000)
-	validatorId := strconv.Itoa(id)
+	// id := rand.Intn(100000000)
+	validatorId := strconv.Itoa(port)
 	publicKey := "public-key"
 	privateKey := "private-key"
 	memPool := NewMemPool()
@@ -306,12 +398,4 @@ func NewValidator(port int) Validator {
 		clients:     make(map[*websocket.Conn]bool),
 		peers:       []string{},
 	}
-}
-
-func (v *validator) AddPeer(peer string) {
-	v.peers = append(v.peers, peer)
-}
-
-func (v *validator) Port() int {
-	return v.port
 }
