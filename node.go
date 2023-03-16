@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
 	"github.com/gorilla/websocket"
 	// "github.com/onspeedhp/project/crypto"
 )
@@ -23,11 +24,11 @@ var (
 )
 
 type MemPool struct {
-	Transactions []*Input `json:"transactions"`
-	count 	  	 int      `json:"count"` // number of transactions in the mempool
+	Inputs []*Input `json:"transactions"`
 }
 
-type Input struct {
+type Input struct { 
+	Id 		  string `json:"id"`
 	PublicKey string `json:"publicKey"`
 	Signature string `json:"signature"`
 	Data []string 	 `json:"data"`
@@ -61,7 +62,7 @@ type node struct {
 	port    string
 	id      string
 	peers   []interface{}
-	MemPool MemPool
+	memPool MemPool
 	
 }
 
@@ -108,10 +109,24 @@ func (n *node) Serve(w http.ResponseWriter, r *http.Request) {
 		if msg.Type == 1 {
 			log.Println("MessageString")
 		} else if msg.Type == 2 {
-			n.AddToPeers(msg.Content)
+			if CompareSlices(msg.Content, n.peers) {
+				// log.Println("Peers already exist")
+			} else {
+				n.AddToPeers(msg.Content)
+			}
 		} else if msg.Type == 3 {
 			time.Sleep(1 * time.Second)
+			input := ConvertInterfacetoInput(msg.Content[0])
+			n.AddtoMemPool(&input)
 			n.Broadcast(msg)
+			// exist := n.AddtoMemPool(&input)
+			// // n.Broadcast(msg)
+			// if exist {
+			// 	// log.Println("Input already exist")
+			// } else {
+			// 	n.Broadcast(msg)
+			// }
+			log.Println(len(n.memPool.Inputs))
 		}
 	}
 }
@@ -178,7 +193,6 @@ func (n *node) Broadcast(args ...interface{}) {
 		for _, port := range n.peers {
 			if n.port != port {
 				peer := &node{address: "localhost", port: port.(string), id: "0"}
-
 				// connect to the peer's server and send a message
 				u := url.URL{Scheme: "ws", Host: peer.Address() + ":" + peer.Port(), Path: "/ws"}
 
@@ -218,6 +232,24 @@ func ConvertStringtoInterface(str []string) []interface{} {
 	return result
 }
 
+func ConvertInterfacetoInput(inter interface{}) Input {
+	// Assert msg is a map[string]interface{}
+	msgMap, ok := inter.(map[string]interface{})
+	if !ok {
+		// Handle error: msg is not a map[string]interface{}
+	}
+
+	// Extract values from msgMap and assign to new instance of Input
+	input := Input{
+		Id : 	   msgMap["id"].(string),
+		PublicKey: msgMap["publicKey"].(string),
+		Signature: msgMap["signature"].(string),
+		Data:      []string{msgMap["data"].(string)},
+	}
+
+	return input
+}
+
 func (n *node) AddToPeers(peers []interface{}) []interface{}{
     // check for new peers
     for _, peer := range peers {
@@ -235,12 +267,67 @@ func (n *node) AddToPeers(peers []interface{}) []interface{}{
 	return n.peers
 }
 
+func (n *node) AddtoMemPool(in *Input) bool{
+	alreadExists := false
+	for _, input := range n.memPool.Inputs {
+
+		if input.Id == in.Id {
+			alreadExists = true
+			break
+		}
+	}
+
+	if !alreadExists {
+		n.memPool.Inputs = append(n.memPool.Inputs, in)
+	}
+
+	return alreadExists
+}
+
 func (n *node) GeneratePeers(){
 	n.peers = append(n.peers, "8080")
 	if n.port != "8080" {
 		n.peers = append(n.peers, n.port)
 	}
 }
+
+func CompareSlices(a, b []interface{}) bool {
+    if len(a) != len(b) {
+		// log.Println("Slices are not the same length")
+        return false
+    }
+
+    for i := 0; i < len(a); i++ {
+        if !compareValues(a[i], b[i]) {
+            return false
+        }
+    }
+
+    return true
+}
+
+func compareValues(a, b interface{}) bool {
+    // Handle nil values
+    if a == nil && b == nil {
+        return true
+    } else if a == nil || b == nil {
+        return false
+    }
+    // Type assertion
+    switch a.(type) {
+    case int:
+        return a.(int) == b.(int)
+    case string:
+        return a.(string) == b.(string)
+    case bool:
+        return a.(bool) == b.(bool)
+    // Add other types as necessary...
+    default:
+        // Not comparable types
+        return false
+    }
+}
+
 
 func main(){
 	port := os.Args[1]

@@ -10,9 +10,11 @@ package main
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -25,6 +27,7 @@ var (
 )
 
 type Input struct {
+	Id 		  string `json:"id"`
 	PublicKey string `json:"publicKey"`
 	Signature string `json:"signature"`
 	Data 	  []byte `json:"data"`
@@ -98,7 +101,10 @@ func Broadcast(args ...interface{}) {
 	}
 	defer c.Close()
 	
-	input := Input{PublicKey: "publicKey", Signature: "signature", Data: []byte("data")}
+	// convert to string
+	Id := strconv.Itoa(rand.Intn(5))
+	
+	input := Input{Id: Id, PublicKey: "publicKey", Signature: "signature", Data: []byte("data")}
 	
 	content := []interface{}{input}
 
@@ -108,8 +114,5 @@ func Broadcast(args ...interface{}) {
 
 
 func main(){
-	go StartClient()
-
-	for {
-	}
+	StartClient()
 }
