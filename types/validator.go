@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/hectagon-finance/whiteboard/crypto"
 )
 
 type Validator interface {
@@ -34,7 +35,6 @@ type Validator interface {
 
 	// Get the validator's stake
 	Stake() int64
-
 
 	// Get the validator's status
 	Status() string
@@ -70,7 +70,7 @@ type Validator interface {
 	Port() int
 
 	// Validate a transaction
-	ValidateTransaction(tx Transaction) bool
+	CheckTransaction(tx Transaction) bool
 
 	// broadcast a transaction to all peers
 	broadcastTransaction(tx Transaction)
@@ -89,10 +89,9 @@ type validator struct {
 	httpServer   *http.Server
 	clientsMutex sync.Mutex
 	clients      map[*websocket.Conn]bool
-	peers 	  	 []string
+	peers        []string
 	stopServer   func()
 }
-
 
 func (v *validator) Id() string {
 	return v.validatorId
@@ -252,7 +251,6 @@ func (v *validator) handleConnections(conn *websocket.Conn) {
 	}
 }
 
-
 func (v *validator) StopServer() {
 	if v.stopServer != nil {
 		log.Printf("Validator %s stopping server on port %d", v.validatorId, v.port)
@@ -296,26 +294,25 @@ func (v *validator) ConnectAndSendMessage(message map[string]interface{}) {
 func (v *validator) checkForAvailableValidators() {
 
 	message := map[string]interface{}{
-			"type":        "hello",
-			"validatorId": v.validatorId,
-			"message":     "Hello, I'm validator " + v.validatorId,
+		"type":        "hello",
+		"validatorId": v.validatorId,
+		"message":     "Hello, I'm validator " + v.validatorId,
 	}
-	
+
 	v.ConnectAndSendMessage(message)
 }
 
 func (v *validator) findPeer() {
 
 	message := map[string]interface{}{
-			"type":        "peer",
-			"from":		   v.validatorId,
-			"validatorId": v.validatorId,
-			"message":     v.peers,
+		"type":        "peer",
+		"from":        v.validatorId,
+		"validatorId": v.validatorId,
+		"message":     v.peers,
 	}
-	
+
 	v.ConnectAndSendMessage(message)
 }
-
 
 func (v *validator) sendMessage(conn *websocket.Conn, message map[string]interface{}) {
 	msg, err := json.Marshal(message)
@@ -325,7 +322,6 @@ func (v *validator) sendMessage(conn *websocket.Conn, message map[string]interfa
 	}
 	conn.WriteMessage(websocket.TextMessage, msg)
 }
-
 
 func (v *validator) handleMessage(msg []byte) {
 	var message map[string]interface{}
@@ -341,17 +337,21 @@ func (v *validator) handleMessage(msg []byte) {
 		fmt.Println("Validator", v.validatorId, ": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
 	case "transaction":
 		tx := &transaction{
-				transactionId: message["transactionId"].(string),
-				publicKey:     message["publicKey"].(string),
-				timestamp:     int64(message["timestamp"].(float64)),
-				signature:     message["signature"].(string),
-				hash:          message["hash"].(string),
+			transactionId: message["transactionId"].(string),
+			publicKey:     message["publicKey"].(*crypto.PublicKey),
+			timestamp:     int64(message["timestamp"].(float64)),
+			signature:     message["signature"].(*crypto.Signature),
+			data:          message["data"].([]byte),
+		}
+		if tx.signature.Verify(*tx.publicKey, tx.data) {
+			if v.CheckTransaction(tx) {
+				fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
+				v.broadcastTransaction(tx)
+				v.MemPool().AddTransaction(tx)
+				fmt.Println(v.MemPool().Size())
+			} else {
+				fmt.Printf("Validator %s: Already have that transaction\n", v.validatorId)
 			}
-		if v.ValidateTransaction(tx) {
-			fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
-			v.broadcastTransaction(tx)
-			v.MemPool().AddTransaction(tx)
-			fmt.Println(v.MemPool().Size())
 		} else {
 			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
 		}
@@ -372,16 +372,15 @@ func (v *validator) broadcastTransaction(tx Transaction) {
 		"publicKey":     tx.PublicKey(),
 		"timestamp":     tx.Timestamp(),
 		"signature":     tx.Signature(),
-		"hash":          tx.Hash(),
+		"data":          tx.Data(),
 	}
 
 	v.ConnectAndSendMessage(message)
 }
 
-
-func (v *validator) ValidateTransaction(tx Transaction) bool {
-	for i := range v.memPool.GetTransactions(){
-		if v.memPool.GetTransactions()[i].Id() == tx.Id(){
+func (v *validator) CheckTransaction(tx Transaction) bool {
+	for i := range v.memPool.GetTransactions() {
+		if v.memPool.GetTransactions()[i].Id() == tx.Id() {
 			return false
 		}
 	}
@@ -420,7 +419,7 @@ func NewValidator(port int) Validator {
 	peers := []string{"8080"}
 
 	if port != 8080 {
-		peers = append(peers, strconv.Itoa(port))	
+		peers = append(peers, strconv.Itoa(port))
 	}
 
 	return &validator{
