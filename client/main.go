@@ -16,7 +16,7 @@ import (
 	"github.com/hectagon-finance/whiteboard/types"
 )
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
+// var addr = flag.String("addr", "localhost:8080", "http service address")
 
 func main() {
 	// gob.Register(elliptic.P256())
@@ -90,8 +90,10 @@ func main() {
 
 			interrupt := make(chan os.Signal, 1)
 			signal.Notify(interrupt, os.Interrupt)
-
-			tx := types.NewTransaction(publicKey, sig, msg)
+			
+			haha := *publicKey
+			hehe := *sig
+			tx := types.NewTransaction(haha, hehe, msg)
 			sendTransaction("9000", tx)
 
 		}
@@ -126,17 +128,25 @@ func sendTransaction(validatorId string, tx types.Transaction) {
 	}
 	defer conn.Close()
 
+	fmt.Println("Sending transaction to validator", validatorId)
+
+	publicKey := tx.PublicKey()
+	publicKeyStr := publicKey.PublicKeyStr()
+
+	signature := tx.Signature()
+	signatureStr := signature.SignatureStr()
+
 	message := map[string]interface{}{
 		"type":          "transaction",
 		"from":          "client",
-		"validatorId":   "fake-client",
+		"validatorId":   "fake",
 		"transactionId": tx.Id(),
-		"publicKey":     tx.PublicKey(),
 		"timestamp":     tx.Timestamp(),
-		"signature":     tx.Signature(),
-		"data":          tx.Data(),
+		"publicKey" :    publicKeyStr,
+		"signature" :    signatureStr,
+		"data":          string(tx.Data()),
 	}
-
+	
 	msg, err := json.Marshal(message)
 	if err != nil {
 		fmt.Println("Error marshaling the message:", err)

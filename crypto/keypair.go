@@ -41,6 +41,7 @@ func (k PrivateKey) Sign(data []byte) (*Signature, error) {
 	}, nil
 }
 
+
 func (k PrivateKey) PublicKey() PublicKey {
 	return PublicKey{
 		Key: &k.Key.PublicKey,
@@ -68,6 +69,10 @@ func (k PublicKey) Address() Address {
 type Signature struct {
 	S, R *big.Int
 }
+func (s *Signature) SignatureStr() string {
+	return fmt.Sprintf("%064x%064x", s.S, s.R)
+}
+
 
 func (sig Signature) Verify(pubKey PublicKey, data []byte) bool {
 	return ecdsa.Verify(pubKey.Key, data, sig.R, sig.S)
@@ -96,4 +101,9 @@ func PrivateKeyFromString(s string, publicKey *ecdsa.PublicKey) *PrivateKey {
 	var bi big.Int
 	_ = bi.SetBytes(b)
 	return &PrivateKey{&ecdsa.PrivateKey{*publicKey, &bi}}
+}
+
+func SignatureFromString(s string) *Signature {
+	x, y := String2BigIntTuple(s)
+	return &Signature{&x, &y}
 }

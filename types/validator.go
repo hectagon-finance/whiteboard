@@ -323,6 +323,7 @@ func (v *validator) sendMessage(conn *websocket.Conn, message map[string]interfa
 	conn.WriteMessage(websocket.TextMessage, msg)
 }
 
+
 func (v *validator) handleMessage(msg []byte) {
 	var message map[string]interface{}
 	err := json.Unmarshal(msg, &message)
@@ -336,23 +337,35 @@ func (v *validator) handleMessage(msg []byte) {
 	case "hello":
 		fmt.Println("Validator", v.validatorId, ": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
 	case "transaction":
+
+		publicKeyStr := message["publicKey"].(string)
+		signatureStr := message["signature"].(string)
+
+		publicKey := crypto.PublicKeyFromString(publicKeyStr)
+		signature := crypto.SignatureFromString(signatureStr)
+
+		data := message["data"].(string)
+
 		tx := &transaction{
 			transactionId: message["transactionId"].(string),
-			publicKey:     message["publicKey"].(*crypto.PublicKey),
+			publicKey:     *publicKey,
 			timestamp:     int64(message["timestamp"].(float64)),
-			signature:     message["signature"].(*crypto.Signature),
-			data:          message["data"].([]byte),
+			signature:     *signature,
+			data:          []byte(data),
 		}
-		if tx.signature.Verify(*tx.publicKey, tx.data) {
+		
+		if tx.signature.Verify(*publicKey, tx.data) {
 			if v.CheckTransaction(tx) {
 				fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
 				v.broadcastTransaction(tx)
 				v.MemPool().AddTransaction(tx)
-				fmt.Println(v.MemPool().Size())
+				fmt.Printf("Validator %s: Adding new transaction to mempool: %s\n", v.validatorId, tx.Id())
+				fmt.Println("MemPool size: ", v.MemPool().Size())
 			} else {
 				fmt.Printf("Validator %s: Already have that transaction\n", v.validatorId)
 			}
 		} else {
+			fmt.Print("Invalid")
 			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
 		}
 	case "peer":
@@ -364,15 +377,21 @@ func (v *validator) handleMessage(msg []byte) {
 }
 
 func (v *validator) broadcastTransaction(tx Transaction) {
+	publicKey := tx.PublicKey()
+	publicKeyStr := publicKey.PublicKeyStr()
+
+	signature := tx.Signature()
+	signatureStr := signature.SignatureStr()
+
 	message := map[string]interface{}{
 		"type":          "transaction",
-		"from":          "validator",
-		"validatorId":   v.validatorId,
+		"from":          "client",
+		"validatorId":   "fake-client",
 		"transactionId": tx.Id(),
-		"publicKey":     tx.PublicKey(),
 		"timestamp":     tx.Timestamp(),
-		"signature":     tx.Signature(),
-		"data":          tx.Data(),
+		"publicKey" : 	 publicKeyStr,
+		"signature" : 	 signatureStr,
+		"data":          string(tx.Data()),
 	}
 
 	v.ConnectAndSendMessage(message)

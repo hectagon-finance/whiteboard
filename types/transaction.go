@@ -1,6 +1,7 @@
 package types
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/hectagon-finance/whiteboard/crypto"
@@ -11,13 +12,13 @@ type Transaction interface {
 	Id() string
 
 	// Get the transaction's public key
-	PublicKey() *crypto.PublicKey
+	PublicKey() crypto.PublicKey
 
 	// Get the transaction's timestamp
 	Timestamp() int64
 
 	// Get the transaction's signature
-	Signature() *crypto.Signature
+	Signature() crypto.Signature
 
 	// Get the transaction's hash
 	Data() []byte
@@ -25,9 +26,9 @@ type Transaction interface {
 
 type transaction struct {
 	transactionId string
-	publicKey     *crypto.PublicKey
+	publicKey     crypto.PublicKey
 	timestamp     int64
-	signature     *crypto.Signature
+	signature     crypto.Signature
 	data          []byte
 }
 
@@ -39,7 +40,7 @@ func (t *transaction) Timestamp() int64 {
 	return t.timestamp
 }
 
-func (t *transaction) Signature() *crypto.Signature {
+func (t *transaction) Signature() crypto.Signature {
 	return t.signature
 }
 
@@ -47,7 +48,7 @@ func (t *transaction) Data() []byte {
 	return t.data
 }
 
-func (t *transaction) PublicKey() *crypto.PublicKey {
+func (t *transaction) PublicKey() crypto.PublicKey {
 	return t.publicKey
 }
 
@@ -61,13 +62,14 @@ func (t *transaction) PublicKey() *crypto.PublicKey {
 // 	}
 // }
 
-func NewTransaction(publicKey *crypto.PublicKey, signature *crypto.Signature, data []byte) Transaction {
+func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data []byte) Transaction {
 
+	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &transaction{
-		transactionId: "real",
+		transactionId: id,
 		publicKey:     publicKey,
 		timestamp:     time.Now().UnixNano(),
 		signature:     signature,
-		data:          []byte("hello"),
+		data:          data,
 	}
 }
