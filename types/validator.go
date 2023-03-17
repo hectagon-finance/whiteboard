@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	// "math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -65,7 +64,7 @@ type Validator interface {
 	StopServer()
 
 	// Add a new peer to the validator
-	AddPeer(peer string)
+	AddPeer(peers []interface{})
 
 	// Get port
 	Port() int
@@ -160,13 +159,14 @@ func (v *validator) StartClient() {
 		defer conn.Close()
 		log.Println("Connected to the server")
 
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
 				v.checkForAvailableValidators()
+				v.findPeer()
 			}
 		}
 	}
@@ -265,29 +265,31 @@ func (v *validator) ConnectAndSendMessage(message map[string]interface{}) {
 	defer v.clientsMutex.Unlock()
 
 	for _, peer := range v.peers {
-		// Check if the peer is already connected
-		isConnected := false
-		for conn := range v.clients {
-			if conn.RemoteAddr().String() == "localhost:"+peer {
-				isConnected = true
-				break
+		if peer != strconv.Itoa(v.port) {
+			// Check if the peer is already connected
+			isConnected := false
+			for conn := range v.clients {
+				if conn.RemoteAddr().String() == "localhost:"+peer {
+					isConnected = true
+					break
+				}
 			}
-		}
-		if isConnected {
-			continue
-		}
+			if isConnected {
+				continue
+			}
 
-		u := url.URL{Scheme: "ws", Host: "localhost:" + peer, Path: "/ws"}
-		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-		if err != nil {
-			fmt.Println("Error connecting to the peer:", err)
-			continue
+			u := url.URL{Scheme: "ws", Host: "localhost:" + peer, Path: "/ws"}
+			conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+			if err != nil {
+				fmt.Println("Error connecting to the peer:", err)
+				continue
+			}
+			defer conn.Close()
+
+			v.clients[conn] = true
+
+			v.sendMessage(conn, message)
 		}
-		defer conn.Close()
-
-		v.clients[conn] = true
-
-		v.sendMessage(conn, message)
 	}
 }
 
@@ -297,6 +299,18 @@ func (v *validator) checkForAvailableValidators() {
 			"type":        "hello",
 			"validatorId": v.validatorId,
 			"message":     "Hello, I'm validator " + v.validatorId,
+	}
+	
+	v.ConnectAndSendMessage(message)
+}
+
+func (v *validator) findPeer() {
+
+	message := map[string]interface{}{
+			"type":        "peer",
+			"from":		   v.validatorId,
+			"validatorId": v.validatorId,
+			"message":     v.peers,
 	}
 	
 	v.ConnectAndSendMessage(message)
@@ -341,6 +355,9 @@ func (v *validator) handleMessage(msg []byte) {
 		} else {
 			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.validatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
 		}
+	case "peer":
+		fmt.Printf("Validator %s: Valid peers array received from %s: %s\n", v.validatorId, message["validatorId"].(string), message["message"].([]interface{}))
+		v.AddPeer(message["message"].([]interface{}))
 	default:
 		fmt.Println("Default")
 	}
@@ -371,8 +388,22 @@ func (v *validator) ValidateTransaction(tx Transaction) bool {
 	return true
 }
 
-func (v *validator) AddPeer(peer string) {
-	v.peers = append(v.peers, peer)
+func (v *validator) AddPeer(peers []interface{}) {
+	for _, peer := range peers {
+		alreadyhave := false
+		for _, p := range v.peers {
+			if p == peer.(string) {
+				alreadyhave = true
+				break
+			}
+		}
+
+		if !alreadyhave {
+			fmt.Println("Validator", v.validatorId, ": Adding new peer", peer.(string))
+			v.peers = append(v.peers, peer.(string))
+		}
+
+	}
 }
 
 func (v *validator) Port() int {
@@ -386,6 +417,12 @@ func NewValidator(port int) Validator {
 	privateKey := "private-key"
 	memPool := NewMemPool()
 
+	peers := []string{"8080"}
+
+	if port != 8080 {
+		peers = append(peers, strconv.Itoa(port))	
+	}
+
 	return &validator{
 		validatorId: validatorId,
 		publicKey:   publicKey,
@@ -396,6 +433,6 @@ func NewValidator(port int) Validator {
 		status:      "inactive",
 		port:        port,
 		clients:     make(map[*websocket.Conn]bool),
-		peers:       []string{},
+		peers:       peers,
 	}
 }

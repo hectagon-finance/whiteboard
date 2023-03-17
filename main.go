@@ -15,31 +15,24 @@ import (
 func main() {
 	if len(os.Args) >= 2{
 		current_validator_id := os.Args[1]
-		peer_validator_id := os.Args[2]
 
 		a, err := strconv.Atoi(current_validator_id)
-		b, err := strconv.Atoi(peer_validator_id)
 		if err != nil {
 			// ... handle error
 			panic(err)
 		}
 
 		// Create two validators
-		v1 := types.NewValidator(a)
-		v2 := types.NewValidator(b)
-
-		// Add each other as peers
-		v1.AddPeer(peer_validator_id)
-		v2.AddPeer(current_validator_id)
+		v := types.NewValidator(a)
 
 		// Start the validators
-		v1.Start()
+		v.Start()
 
 		// Wait for a few seconds to let the validators establish connections
 		time.Sleep(100 * time.Second)
 
 		// Stop the validators
-		v1.Stop()
+		v.Stop()
 	} else {
 		// Create a fake transaction
 		tx := types.FakeTransaction()
