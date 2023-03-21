@@ -1,33 +1,38 @@
 package main
 
 import (
-	"os"
-	"strconv"
-	"time"
+	"fmt"
 
+	"github.com/hectagon-finance/whiteboard/crypto"
 	"github.com/hectagon-finance/whiteboard/types"
 )
 
 func main() {
-	if len(os.Args) >= 2 {
-		current_validator_id := os.Args[1]
+	privateKey := crypto.GeneratePrivateKey()
+	publicKey := privateKey.PublicKey()
 
-		a, err := strconv.Atoi(current_validator_id)
-		if err != nil {
-			// ... handle error
-			panic(err)
-		}
+	msg := []byte("Hello World")
 
-		// Create two validators
-		v := types.NewValidator(a)
-
-		// Start the validators
-		v.Start()
-
-		// Wait for a few seconds to let the validators establish connections
-		time.Sleep(100 * time.Second)
-
-		// Stop the validators
-		v.Stop()
+	sig, err := privateKey.Sign(msg)
+	if err != nil {
+		panic(err)
 	}
+
+	trans := types.NewTransaction(publicKey, *sig, msg)
+
+	transactions := []*types.Transaction{&trans}
+
+	bc := types.NewBlockchain()
+	prevHash := bc.LastBlock().Hash()
+	fmt.Println(prevHash)
+	bc.CreateBlock(1, prevHash, transactions)
+
+	prevHash = bc.LastBlock().Hash()
+	fmt.Println(prevHash)
+	bc.CreateBlock(2, prevHash, transactions)
+
+	prevHash = bc.LastBlock().Hash()
+	fmt.Println(prevHash)
+	bc.CreateBlock(3, prevHash, transactions)
+	bc.Print()
 }

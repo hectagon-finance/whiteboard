@@ -1,104 +1,64 @@
 package types
 
 import (
-	"time"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 )
 
-type  Block  interface  {
-	// Get the block's id
-	Id ()  string
-
-	// Get the block's timestamp
-	Timestamp ()  int64
-
-	// Get the block's hash
-	Hash ()  string
-
-	// Get the block's previous hash
-	PreviousHash ()  string
-
-	// Get the block's transactions
-	Transactions () [] Transaction
-
-	// Get the block's validator
-	Validator ()  Validator
-
-	// Get the block's signature
-	Signature ()  string
-
+type Block struct {
+	height       int
+	hash         [32]byte
+	previousHash [32]byte
+	transactions []*Transaction
 }
 
-type  block  struct  {
-	blockId  string
-	timestamp  int64
-	hash  string
-	previousHash  string
-	transactions  [] Transaction
-	validator  Validator
-	signature  string
+func (b *Block) Id() int {
+	return b.height
 }
 
-func  (b * block )  Id ()  string  {
-	 return  b.blockId
+func (b *Block) Hash() [32]byte {
+	return b.hash
 }
 
-func  (b * block )  Timestamp ()  int64  {
-	 return  b.timestamp
+func (b *Block) PreviousHash() [32]byte {
+	return b.previousHash
 }
 
-func  (b * block )  Hash ()  string  {
-	 return  b.hash
+func (b *Block) Transactions() []*Transaction {
+	return b.transactions
 }
 
-func  (b * block )  PreviousHash ()  string  {
-	 return  b.previousHash
+func NewBlock(height int, previousHash [32]byte, transactions []*Transaction) *Block {
+	b := new(Block)
+	b.height = height
+	b.previousHash = previousHash
+	b.transactions = transactions
+	b.hash = b.calculateHash()
+	return b
 }
 
-func  (b * block )  Transactions () [] Transaction  {
-	 return  b.transactions
+func (b *Block) calculateHash() [32]byte {
+	m, _ := json.Marshal(struct {
+		height       int            `json:"height"`
+		previousHash [32]byte       `json:"previousHash"`
+		transactions []*Transaction `json:"transactions"`
+	}{
+		height:       b.height,
+		previousHash: b.previousHash,
+		transactions: b.transactions,
+	})
+
+	// hash height, previousHash, transactions
+	return sha256.Sum256([]byte(m))
 }
 
-func  (b * block )  Validator ()  Validator  {
-	 return  b.validator
-}
+func (b *Block) Print() {
 
-func  (b * block )  Signature ()  string  {
-	 return  b.signature
-}
-
-func  NewBlock (blockId string, hash string, previousHash string, transactions [] Transaction, validator Validator, signature string)  Block  {
-	return & block  {
-		blockId: blockId,
-		timestamp: time.Now().UnixNano(),
-		hash: hash,
-		previousHash: previousHash,
-		transactions: transactions,
-		validator: validator,
-		signature: signature,
+	fmt.Printf("previous_hash   %x\n", b.previousHash)
+	fmt.Printf("hash   %x\n", b.hash)
+	for _, t := range b.transactions {
+		a := *t
+		fmt.Println(string(a.Data()))
 	}
 }
-
-func NewGenesisBlock (validator Validator)  Block  {
-	return & block  {
-		blockId: "0",
-		timestamp: time.Now().UnixNano(),
-		hash: "0",
-		previousHash: "0",
-		transactions: [] Transaction {},
-		validator: validator,
-		signature: "0",
-	}
-}
-
-func NewRandomBlock (validator Validator)  Block  {
-	return & block  {
-		blockId: "0",
-		timestamp: time.Now().UnixNano(),
-		hash: "0",
-		previousHash: "0",
-		transactions: [] Transaction {},
-		validator: validator,
-		signature: "0",
-	}
-}
-
