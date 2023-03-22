@@ -90,7 +90,7 @@ func main() {
 
 			interrupt := make(chan os.Signal, 1)
 			signal.Notify(interrupt, os.Interrupt)
-			
+
 			haha := *publicKey
 			hehe := *sig
 			tx := types.NewTransaction(haha, hehe, msg)
@@ -141,12 +141,11 @@ func sendTransaction(validatorId string, tx types.Transaction) {
 		"from":          "client",
 		"validatorId":   "fake",
 		"transactionId": tx.Id(),
-		"timestamp":     tx.Timestamp(),
-		"publicKey" :    publicKeyStr,
-		"signature" :    signatureStr,
+		"publicKey":     publicKeyStr,
+		"signature":     signatureStr,
 		"data":          string(tx.Data()),
 	}
-	
+
 	msg, err := json.Marshal(message)
 	if err != nil {
 		fmt.Println("Error marshaling the message:", err)

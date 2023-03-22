@@ -1,18 +1,32 @@
 package types
 
+type MemPool interface {
+	// Add a transaction to the mempool
+	AddTransaction(tx Transaction)
 
-type MemPool struct {
-	transactions []*Transaction
+	// Get the transactions in the mempool
+	GetTransactions() []Transaction
+
+	// Get the size of the mempool
+	Size() int
 }
 
-func (m *MemPool) AddTransaction(tx *Transaction) {
+type memPool struct {
+	transactions []Transaction
+}
+
+func (m *memPool) AddTransaction(tx Transaction) {
 	m.transactions = append(m.transactions, tx)
 }
 
-func (m *MemPool) Size() int {
+func (m *memPool) GetTransactions() []Transaction {
+	return m.transactions
+}
+
+func (m *memPool) Size() int {
 	return len(m.transactions)
 }
 
-func NewMemPool() *MemPool {
-	return &MemPool{}
+func NewMemPool() MemPool {
+	return &memPool{}
 }

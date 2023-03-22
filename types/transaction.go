@@ -23,17 +23,12 @@ type Transaction interface {
 type transaction struct {
 	transactionId string
 	publicKey     crypto.PublicKey
-	timestamp     int64
 	signature     crypto.Signature
 	data          []byte
 }
 
 func (t *transaction) Id() string {
 	return t.transactionId
-}
-
-func (t *transaction) Timestamp() int64 {
-	return t.timestamp
 }
 
 func (t *transaction) Signature() crypto.Signature {
@@ -67,4 +62,3 @@ func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data
 		data:          data,
 	}
 }
-
