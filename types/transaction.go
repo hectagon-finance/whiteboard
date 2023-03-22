@@ -1,8 +1,10 @@
 package types
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/hectagon-finance/whiteboard/crypto"
-	"github.com/hectagon-finance/whiteboard/utils"
 )
 
 type Transaction interface {
@@ -54,7 +56,7 @@ func (t *transaction) PublicKey() crypto.PublicKey {
 // }
 
 func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data []byte) Transaction {
-	id := utils.RandString(9)
+	id := strconv.Itoa(int(time.Now().UnixNano()))
 	return &transaction{
 		transactionId: id,
 		publicKey:     publicKey,
