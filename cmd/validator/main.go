@@ -1,33 +1,63 @@
 package main
 
-// import (
-// 	"os"
-// 	"strconv"
-// 	"time"
+import (
+	"os"
+	"strconv"
+	"time"
 
-// 	."github.com/hectagon-finance/whiteboard/types"
-// )
+	"github.com/gorilla/websocket"
+	. "github.com/hectagon-finance/whiteboard/types"
+	. "github.com/hectagon-finance/whiteboard/validator"
+	. "github.com/hectagon-finance/whiteboard/validator/start"
+)
 
-// func main() {
-// 	if len(os.Args) >= 2 {
-// 		current_validator_id := os.Args[1]
+func main() {
+	if len(os.Args) >= 2 {
+		current_validator_id := os.Args[1]
 
-// 		a, err := strconv.Atoi(current_validator_id)
-// 		if err != nil {
-// 			// ... handle error
-// 			panic(err)
-// 		}
+		a, err := strconv.Atoi(current_validator_id)
+		if err != nil {
+			// ... handle error
+			panic(err)
+		}
 
-// 		// Create two validators
-// 		v := types.NewValidator(a)
+		// Create two validators
+		v := NewValidator(a)
 
-// 		// Start the validators
-// 		v.Start()
+		// Start the validators
+		Start(&v)
 
-// 		// Wait for a few seconds to let the validators establish connections
-// 		time.Sleep(100 * time.Second)
+		// Wait for a few seconds to let the validators establish connections
+		time.Sleep(100 * time.Second)
 
-// 		// Stop the validators
-// 		v.Stop()
-// 	}
-// }
+		// Stop the validators
+		Stop(&v)
+	}
+}
+
+func NewValidator(port int) ValidatorStruct {
+	// id := rand.Intn(100000000)
+	validatorId := strconv.Itoa(port)
+	publicKey := "public-key"
+	privateKey := "private-key"
+	memPool := NewMemPool()
+
+	peers := []string{"8080"}
+
+	if port != 8080 {
+		peers = append(peers, strconv.Itoa(port))
+	}
+
+	return ValidatorStruct{
+		ValidatorId: validatorId,
+		PublicKey:   publicKey,
+		PrivateKey:  privateKey,
+		MemPool:     memPool,
+		Balance:     0,
+		Stake:       0,
+		Status:      "inactive",
+		Port:        port,
+		Clients:     make(map[*websocket.Conn]bool),
+		Peers:       peers,
+	}
+}

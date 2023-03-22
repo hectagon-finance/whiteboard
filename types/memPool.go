@@ -1,6 +1,5 @@
 package types
 
-
 type MemPool struct {
 	Transactions []Transaction
 }
@@ -17,6 +16,10 @@ func (m *MemPool) Size() int {
 	return len(m.Transactions)
 }
 
-func NewMemPool() *MemPool {
-	return &MemPool{}
+func (m *MemPool) Clear() {
+	m.Transactions = []Transaction{}
+}
+
+func NewMemPool() MemPool {
+	return MemPool{}
 }

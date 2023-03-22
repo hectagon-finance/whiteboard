@@ -33,15 +33,6 @@ func (t *Transaction) GetData() []byte {
 
 
 
-// func NewTransaction(transactionId string, publicKey string, signature string, hash string) Transaction {
-// 	return &transaction{
-// 		transactionId: transactionId,
-// 		publicKey:     publicKey,
-// 		timestamp:     time.Now().UnixNano(),
-// 		signature:     signature,
-// 		hash:          hash,
-// 	}
-// }
 
 func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data []byte) Transaction {
 	id := strconv.Itoa(int(time.Now().UnixNano())) + strconv.Itoa(rand.Intn(1000000))

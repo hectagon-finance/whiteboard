@@ -7,57 +7,56 @@ import (
 )
 
 type Block struct {
-	height       int
-	hash         [32]byte
-	previousHash [32]byte
-	transactions []Transaction
+	Height       int
+	Hash         [32]byte
+	PreviousHash [32]byte
+	Transactions []Transaction
 }
 
 func (b *Block) Id() int {
-	return b.height
+	return b.Height
 }
 
-func (b *Block) Hash() [32]byte {
-	return b.hash
+func (b *Block) GetHash() [32]byte {
+	return b.Hash
 }
 
-func (b *Block) PreviousHash() [32]byte {
-	return b.previousHash
+func (b *Block) GetPreviousHash() [32]byte {
+	return b.PreviousHash
 }
 
-func (b *Block) Transactions() []Transaction {
-	return b.transactions
+func (b *Block) GetTransactions() []Transaction {
+	return b.Transactions
 }
 
-func NewBlock(height int, previousHash [32]byte, transactions []Transaction) *Block {
+func NewBlock(Height int, PreviousHash [32]byte, Transactions []Transaction) *Block {
 	b := new(Block)
-	b.height = height
-	b.previousHash = previousHash
-	b.transactions = transactions
-	b.hash = b.calculateHash()
+	b.Height = Height
+	b.PreviousHash = PreviousHash
+	b.Transactions = Transactions
+	b.Hash = b.calculateHash()
 	return b
 }
 
 func (b *Block) calculateHash() [32]byte {
 	m, _ := json.Marshal(struct {
-		Height       int            `json:"height"`
-		PreviousHash [32]byte       `json:"previousHash"`
+		Height       int           `json:"height"`
+		PreviousHash [32]byte      `json:"previousHash"`
 		Transactions []Transaction `json:"transactions"`
 	}{
-		Height:       b.height,
-		PreviousHash: b.previousHash,
-		Transactions: b.transactions,
+		Height:       b.Height,
+		PreviousHash: b.PreviousHash,
+		Transactions: b.Transactions,
 	})
-	fmt.Println(string(m))
 	// hash height, previousHash, transactions
 	return sha256.Sum256([]byte(m))
 }
 
 func (b *Block) Print() {
 
-	fmt.Printf("previous_hash   %x\n", b.previousHash)
-	fmt.Printf("hash   %x\n", b.hash)
-	for _, tx := range b.transactions {
-		fmt.Println("Transaction:", tx.Data)	
+	fmt.Printf("previous_hash   %x\n", b.PreviousHash)
+	fmt.Printf("hash   %x\n", b.Hash)
+	for _, tx := range b.Transactions {
+		fmt.Println("Transaction:", string(tx.Data))
 	}
 }

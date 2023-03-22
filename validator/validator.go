@@ -8,7 +8,7 @@ import (
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
-type ValidatorStruct struct{
+type ValidatorStruct struct {
 	ValidatorId  string
 	PublicKey    string
 	PrivateKey   string

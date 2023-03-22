@@ -12,8 +12,9 @@ import (
 	"os/signal"
 
 	"github.com/gorilla/websocket"
-	"github.com/hectagon-finance/whiteboard/utils/crypto"
 	"github.com/hectagon-finance/whiteboard/types"
+	. "github.com/hectagon-finance/whiteboard/types"
+	"github.com/hectagon-finance/whiteboard/utils/crypto"
 )
 
 // var addr = flag.String("addr", "localhost:8080", "http service address")
@@ -119,7 +120,7 @@ func checkHaveWallet(s string, showMessage bool) bool {
 	}
 }
 
-func sendTransaction(validatorId string, tx types.Transaction) {
+func sendTransaction(validatorId string, tx Transaction) {
 	u := url.URL{Scheme: "ws", Host: "localhost:" + validatorId, Path: "/ws"}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -130,10 +131,10 @@ func sendTransaction(validatorId string, tx types.Transaction) {
 
 	fmt.Println("Sending transaction to validator", validatorId)
 
-	publicKey := tx.PublicKey()
+	publicKey := tx.PublicKey
 	publicKeyStr := publicKey.PublicKeyStr()
 
-	signature := tx.Signature()
+	signature := tx.Signature
 	signatureStr := signature.SignatureStr()
 
 	message := map[string]interface{}{
@@ -143,7 +144,7 @@ func sendTransaction(validatorId string, tx types.Transaction) {
 		"transactionId": tx.Id(),
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,
-		"data":          string(tx.Data()),
+		"data":          string(tx.Data),
 	}
 
 	msg, err := json.Marshal(message)
