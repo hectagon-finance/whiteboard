@@ -40,15 +40,15 @@ func NewBlock(height int, previousHash [32]byte, transactions []*Transaction) *B
 
 func (b *Block) calculateHash() [32]byte {
 	m, _ := json.Marshal(struct {
-		height       int            `json:"height"`
-		previousHash [32]byte       `json:"previousHash"`
-		transactions []*Transaction `json:"transactions"`
+		Height       int            `json:"height"`
+		PreviousHash [32]byte       `json:"previousHash"`
+		Transactions []*Transaction `json:"transactions"`
 	}{
-		height:       b.height,
-		previousHash: b.previousHash,
-		transactions: b.transactions,
+		Height:       b.height,
+		PreviousHash: b.previousHash,
+		Transactions: b.transactions,
 	})
-
+	fmt.Println(string(m))
 	// hash height, previousHash, transactions
 	return sha256.Sum256([]byte(m))
 }
