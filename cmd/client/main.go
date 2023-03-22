@@ -12,7 +12,7 @@ import (
 	"os/signal"
 
 	"github.com/gorilla/websocket"
-	"github.com/hectagon-finance/whiteboard/crypto"
+	"github.com/hectagon-finance/whiteboard/utils/crypto"
 	"github.com/hectagon-finance/whiteboard/types"
 )
 
