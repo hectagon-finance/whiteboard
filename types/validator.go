@@ -378,7 +378,7 @@ func (v *validator) broadcastTransaction(tx Transaction) {
 	message := map[string]interface{}{
 		"type":          "transaction",
 		"from":          "client",
-		"validatorId":   "fake-client",
+		"validatorId":   v.Id(),
 		"transactionId": tx.Id(),
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,
