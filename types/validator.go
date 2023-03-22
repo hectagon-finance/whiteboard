@@ -397,7 +397,7 @@ func (v *validator) CheckTransaction(tx Transaction) bool {
 	}
 	fmt.Println(v.memPool.GetTransactions())
 	fmt.Println(tx.Id())
-
+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
 	return true
 }
 
