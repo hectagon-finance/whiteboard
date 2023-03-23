@@ -6,14 +6,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func  Start(v *ValidatorStruct) {
+func  Start(v *Validator) {
 	v.Status = "active"
 	ready := make(chan bool)
 	go StartServer(v, ready)
@@ -21,7 +21,7 @@ func  Start(v *ValidatorStruct) {
 	go StartClient(v)
 }
 
-func StartServer(v *ValidatorStruct, ready chan bool) {
+func StartServer(v *Validator, ready chan bool) {
 	// Create a new Gorilla WebSocket upgrader
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -77,7 +77,7 @@ func StartServer(v *ValidatorStruct, ready chan bool) {
 	}
 }
 
-func handleConnections(v *ValidatorStruct, conn *websocket.Conn) {
+func handleConnections(v *Validator, conn *websocket.Conn) {
 	defer conn.Close()
 
 	for {
@@ -93,7 +93,7 @@ func handleConnections(v *ValidatorStruct, conn *websocket.Conn) {
 	}
 }
 
-func  StartClient(v *ValidatorStruct) {
+func  StartClient(v *Validator) {
 	u := url.URL{Scheme: "ws", Host: "localhost:" + strconv.Itoa(v.Port), Path: "/ws"}
 
 	// Retry connecting to the server with a delay
@@ -114,7 +114,7 @@ func  StartClient(v *ValidatorStruct) {
 		for {
 			select {
 			case <-ticker.C:
-				CheckForAvailableValidators(v)
+				BroadcastMempool(v)
 				BroadcastPeer(v)
 			}
 		}

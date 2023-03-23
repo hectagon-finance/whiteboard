@@ -8,7 +8,7 @@ import (
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
-type ValidatorStruct struct {
+type Validator struct {
 	ValidatorId  string
 	PublicKey    string
 	PrivateKey   string
@@ -26,38 +26,38 @@ type ValidatorStruct struct {
 	StopServer   func()
 }
 
-func (v *ValidatorStruct) Id() string {
+func (v *Validator) Id() string {
 	return v.ValidatorId
 }
 
-func (v *ValidatorStruct) GetPublicKey() string {
+func (v *Validator) GetPublicKey() string {
 	return v.PublicKey
 }
 
-func (v *ValidatorStruct) GetPrivateKey() string {
+func (v *Validator) GetPrivateKey() string {
 	return v.PrivateKey
 }
 
-func (v *ValidatorStruct) GetMemPool() MemPool {
+func (v *Validator) GetMemPool() MemPool {
 	return v.MemPool
 }
 
-func (v *ValidatorStruct) GetBalance() int64 {
+func (v *Validator) GetBalance() int64 {
 	return v.Balance
 }
 
-func (v *ValidatorStruct) GetStake() int64 {
+func (v *Validator) GetStake() int64 {
 	return v.Stake
 }
 
-func (v *ValidatorStruct) GetStatus() string {
+func (v *Validator) GetStatus() string {
 	return v.Status
 }
 
-func (v *ValidatorStruct) GetLastBlock() Block {
+func (v *Validator) GetLastBlock() Block {
 	return v.LastBlock
 }
 
-func (v *ValidatorStruct) GetPort() int {
+func (v *Validator) GetPort() int {
 	return v.Port
 }

@@ -10,7 +10,7 @@ import (
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func ConnectAndSendMessage(v *ValidatorStruct, message map[string]interface{}) {
+func ConnectAndSendMessage(v *Validator, message map[string]interface{}) {
 	v.ClientsMutex.Lock()
 	defer v.ClientsMutex.Unlock()
 
@@ -43,7 +43,7 @@ func ConnectAndSendMessage(v *ValidatorStruct, message map[string]interface{}) {
 	}
 }
 
-func sendMessage(v *ValidatorStruct, conn *websocket.Conn, message map[string]interface{}) {
+func sendMessage(v *Validator, conn *websocket.Conn, message map[string]interface{}) {
 	msg, err := json.Marshal(message)
 	if err != nil {
 		fmt.Println("Error marshaling the message:", err)

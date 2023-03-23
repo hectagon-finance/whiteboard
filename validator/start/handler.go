@@ -9,7 +9,7 @@ import (
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func HandleMessage(v *ValidatorStruct, msg []byte) {
+func HandleMessage(v *Validator, msg []byte) {
 	var message map[string]interface{}
 	err := json.Unmarshal(msg, &message)
 	if err != nil {
@@ -19,41 +19,21 @@ func HandleMessage(v *ValidatorStruct, msg []byte) {
 
 	switch message["type"].(string) {
 	case "memPool":
+		peer_pool_size := message["memPoolSize"].(float64)
 		if v.MemPool.Size() == 0 {
-			fmt.Println("Validator", v.ValidatorId, ": Received memPool from validator", message["validatorId"].(string))
-			memByte := []byte(message["message"].(string))
-			var memPool []Transaction
-			err := json.Unmarshal(memByte, &memPool)
-			if err != nil {
-				fmt.Println("Error unmarshaling the message:", err)
-				return
-			}
-
-		}
-	case "hello":
-		memPool_peer := int(message["memPool"].(float64))
-		if memPool_peer == 0 {
-			if v.MemPool.Size() == 0 {
-			} else {
-				memByte, err := json.Marshal(v.MemPool.Transactions)
-
+			if peer_pool_size > 0 {
+				memPool, err := DecodeMempool([]byte(message["memPool"].(string)))
 				if err != nil {
-					fmt.Println("Error marshaling the message:", err)
-					return
+					panic(err)
 				}
-				message := map[string]interface{}{
-					"type":        "memPool",
-					"validatorId": v.ValidatorId,
-					"message":     string(memByte),
-				}
-
-				fmt.Println(memByte)
-				fmt.Println("Vaidator", v.ValidatorId, ": Sending memPool to another validator")
-
-				ConnectAndSendMessage(v, message)
+				v.MemPool = memPool
+				fmt.Println("Sync mempool")
+				fmt.Println(v.MemPool.Size())
+			} else {
+				fmt.Println("Do nothing")
 			}
-		}
-		fmt.Println("Validator", v.ValidatorId, ": Received message from validator", message["validatorId"].(string), ":", message["message"].(string))
+		} 
+
 	case "transaction":
 
 		publicKeyStr := message["publicKey"].(string)
@@ -92,7 +72,7 @@ func HandleMessage(v *ValidatorStruct, msg []byte) {
 	}
 }
 
-func addPeer(v *ValidatorStruct, peers []interface{}) {
+func addPeer(v *Validator, peers []interface{}) {
 	for _, peer := range peers {
 		alreadyhave := false
 		for _, p := range v.Peers {
@@ -110,7 +90,7 @@ func addPeer(v *ValidatorStruct, peers []interface{}) {
 	}
 }
 
-func checkTransaction(v *ValidatorStruct, tx Transaction) bool {
+func checkTransaction(v *Validator, tx Transaction) bool {
 	for i := range v.MemPool.GetTransactions() {
 		if v.MemPool.GetTransactions()[i].Id() == tx.Id() {
 			return false

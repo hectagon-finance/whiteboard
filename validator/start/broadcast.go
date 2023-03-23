@@ -5,19 +5,26 @@ import (
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func CheckForAvailableValidators(v *ValidatorStruct) {
+func BroadcastMempool(v *Validator) {
+
+	// encode validator mempool
+	memByte, err := v.MemPool.Encode()
+	if err != nil {
+		panic(err)
+	}
 
 	message := map[string]interface{}{
-		"type":         "hello",
+		"type":         "memPool",
 		"validatorId":  v.Id(),
-		"memPool":  	v.MemPool.Size(),
+		"memPoolSize":  v.MemPool.Size(),
+		"memPool":      string(memByte),
 		"message":      "Hello, I'm validator " + v.Id(),
 	}
 
 	ConnectAndSendMessage(v, message)
 }
 
-func BroadcastPeer(v *ValidatorStruct) {
+func BroadcastPeer(v *Validator) {
 
 	message := map[string]interface{}{
 		"type":        "peer",
@@ -29,7 +36,7 @@ func BroadcastPeer(v *ValidatorStruct) {
 	ConnectAndSendMessage(v, message)
 }
 
-func BroadcastTransaction(v *ValidatorStruct, tx Transaction) {
+func BroadcastTransaction(v *Validator, tx Transaction) {
 	publicKey := tx.PublicKey
 	publicKeyStr := publicKey.PublicKeyStr()
 

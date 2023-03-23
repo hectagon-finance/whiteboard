@@ -35,7 +35,7 @@ func main() {
 	}
 }
 
-func NewValidator(port int) ValidatorStruct {
+func NewValidator(port int) Validator {
 	// id := rand.Intn(100000000)
 	validatorId := strconv.Itoa(port)
 	publicKey := "public-key"
@@ -48,7 +48,7 @@ func NewValidator(port int) ValidatorStruct {
 		peers = append(peers, strconv.Itoa(port))
 	}
 
-	return ValidatorStruct{
+	return Validator{
 		ValidatorId: validatorId,
 		PublicKey:   publicKey,
 		PrivateKey:  privateKey,

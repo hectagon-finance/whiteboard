@@ -15,6 +15,13 @@ type Transaction struct {
 	Data          []byte
 }
 
+type TransactionEncode struct {
+	TransactionId string
+	PublicKey     string
+	Signature     string
+	Data          string
+}
+
 func (t *Transaction) Id() string {
 	return t.TransactionId
 }
@@ -31,9 +38,6 @@ func (t *Transaction) GetData() []byte {
 	return t.Data
 }
 
-
-
-
 func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data []byte) Transaction {
 	id := strconv.Itoa(int(time.Now().UnixNano())) + strconv.Itoa(rand.Intn(1000000))
 	
@@ -42,5 +46,23 @@ func NewTransaction(publicKey crypto.PublicKey, signature crypto.Signature, data
 		PublicKey:     publicKey,
 		Signature:     signature,
 		Data:          data,
+	}
+}
+
+func (t *Transaction) Tranform() TransactionEncode {
+	return TransactionEncode{
+		TransactionId: t.TransactionId,
+		PublicKey:     t.PublicKey.PublicKeyStr(),
+		Signature:     t.Signature.SignatureStr(),
+		Data:          string(t.Data),
+	}
+}
+
+func (t *TransactionEncode) Tranform() Transaction {
+	return Transaction{
+		TransactionId: t.TransactionId,
+		PublicKey:     *crypto.PublicKeyFromString(t.PublicKey),
+		Signature:     *crypto.SignatureFromString(t.Signature),
+		Data:          []byte(t.Data),
 	}
 }
