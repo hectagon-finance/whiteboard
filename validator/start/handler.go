@@ -18,6 +18,7 @@ func HandleMessage(v *Validator, msg []byte) {
 	}
 
 	switch message["type"].(string) {
+
 	case "memPool":
 		peer_pool_size := message["memPoolSize"].(float64)
 		if v.MemPool.Size() == 0 {
@@ -32,7 +33,7 @@ func HandleMessage(v *Validator, msg []byte) {
 			} else {
 				fmt.Println("Do nothing")
 			}
-		} 
+		}
 
 	case "transaction":
 
@@ -67,9 +68,14 @@ func HandleMessage(v *Validator, msg []byte) {
 	case "peer":
 		fmt.Printf("Validator %s: Valid peers array received from %s: %s\n", v.ValidatorId, message["validatorId"].(string), message["message"].([]interface{}))
 		addPeer(v, message["message"].([]interface{}))
+
+	case "blockHash":
+		// check what validator is online
+		fmt.Println(v.Clients)
 	default:
 		fmt.Println("Default")
 	}
+
 }
 
 func addPeer(v *Validator, peers []interface{}) {

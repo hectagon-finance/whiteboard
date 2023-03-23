@@ -14,11 +14,11 @@ func BroadcastMempool(v *Validator) {
 	}
 
 	message := map[string]interface{}{
-		"type":         "memPool",
-		"validatorId":  v.Id(),
-		"memPoolSize":  v.MemPool.Size(),
-		"memPool":      string(memByte),
-		"message":      "Hello, I'm validator " + v.Id(),
+		"type":        "memPool",
+		"validatorId": v.Id(),
+		"memPoolSize": v.MemPool.Size(),
+		"memPool":     string(memByte),
+		"message":     "Hello, I'm validator " + v.Id(),
 	}
 
 	ConnectAndSendMessage(v, message)
@@ -51,6 +51,19 @@ func BroadcastTransaction(v *Validator, tx Transaction) {
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,
 		"data":          string(tx.Data),
+	}
+
+	ConnectAndSendMessage(v, message)
+}
+
+func BroadcastBlockHash(v *Validator, blockHash [32]byte) {
+
+	stringBlockHash := string(blockHash[:])
+
+	message := map[string]interface{}{
+		"type":        "blockHash",
+		"validatorId": v.ValidatorId,
+		"blockHash":     stringBlockHash,
 	}
 
 	ConnectAndSendMessage(v, message)

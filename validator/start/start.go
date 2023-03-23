@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func  Start(v *Validator) {
+func Start(v *Validator) {
 	v.Status = "active"
 	ready := make(chan bool)
 	go StartServer(v, ready)
@@ -93,7 +94,7 @@ func handleConnections(v *Validator, conn *websocket.Conn) {
 	}
 }
 
-func  StartClient(v *Validator) {
+func StartClient(v *Validator) {
 	u := url.URL{Scheme: "ws", Host: "localhost:" + strconv.Itoa(v.Port), Path: "/ws"}
 
 	// Retry connecting to the server with a delay
@@ -116,7 +117,17 @@ func  StartClient(v *Validator) {
 			case <-ticker.C:
 				BroadcastMempool(v)
 				BroadcastPeer(v)
+				checkMemPool(v)
 			}
 		}
+	}
+}
+
+func checkMemPool(v *Validator) {
+	if v.MemPool.Size() == 1 {
+		b := NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
+		blockHash := b.GetHash()
+		fmt.Println("Block hash:", blockHash)
+		BroadcastBlockHash(v, blockHash)
 	}
 }
