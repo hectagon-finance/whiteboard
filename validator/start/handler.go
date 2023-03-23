@@ -71,7 +71,8 @@ func HandleMessage(v *Validator, msg []byte) {
 
 	case "blockHash":
 		// check what validator is online
-		fmt.Println(v.Clients)
+		v.Consensus.AddMessage(v, message)
+
 	default:
 		fmt.Println("Default")
 	}
@@ -101,8 +102,6 @@ func checkTransaction(v *Validator, tx Transaction) bool {
 		if v.MemPool.GetTransactions()[i].Id() == tx.Id() {
 			return false
 		}
-
 	}
-
 	return true
 }

@@ -115,7 +115,7 @@ func StartClient(v *Validator) {
 		for {
 			select {
 			case <-ticker.C:
-				BroadcastMempool(v)
+				// BroadcastMempool(v)
 				BroadcastPeer(v)
 				checkMemPool(v)
 			}
@@ -125,9 +125,10 @@ func StartClient(v *Validator) {
 
 func checkMemPool(v *Validator) {
 	if v.MemPool.Size() == 1 {
-		b := NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
-		blockHash := b.GetHash()
+		v.TempBlock = NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
+		blockHash := v.TempBlock.GetHash()
 		fmt.Println("Block hash:", blockHash)
 		BroadcastBlockHash(v, blockHash)
+		v.MemPool.Clear()
 	}
 }

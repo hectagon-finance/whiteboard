@@ -36,7 +36,9 @@ func main() {
 }
 
 func NewValidator(port int) Validator {
-	// id := rand.Intn(100000000)
+	var blockChain *Blockchain
+	blockChain = NewBlockchain()
+
 	validatorId := strconv.Itoa(port)
 	publicKey := "public-key"
 	privateKey := "private-key"
@@ -52,6 +54,7 @@ func NewValidator(port int) Validator {
 		ValidatorId: validatorId,
 		PublicKey:   publicKey,
 		PrivateKey:  privateKey,
+		Blockchain:  blockChain,
 		MemPool:     memPool,
 		Balance:     0,
 		Stake:       0,

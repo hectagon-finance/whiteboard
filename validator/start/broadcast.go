@@ -1,6 +1,8 @@
 package start
 
 import (
+	"encoding/hex"
+
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
@@ -57,13 +59,13 @@ func BroadcastTransaction(v *Validator, tx Transaction) {
 }
 
 func BroadcastBlockHash(v *Validator, blockHash [32]byte) {
-
-	stringBlockHash := string(blockHash[:])
+	blockHashSlice := blockHash[:]
+	blockHashStr := hex.EncodeToString(blockHashSlice)
 
 	message := map[string]interface{}{
 		"type":        "blockHash",
 		"validatorId": v.ValidatorId,
-		"blockHash":     stringBlockHash,
+		"blockHash":   blockHashStr,
 	}
 
 	ConnectAndSendMessage(v, message)

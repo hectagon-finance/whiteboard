@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -12,8 +13,10 @@ type Validator struct {
 	ValidatorId  string
 	PublicKey    string
 	PrivateKey   string
-	Blockchain   Blockchain
+	Blockchain   *Blockchain
 	MemPool      MemPool
+	Consensus    Consensus
+	TempBlock    *Block
 	Balance      int64
 	Stake        int64
 	Status       string
@@ -60,4 +63,33 @@ func (v *Validator) GetLastBlock() Block {
 
 func (v *Validator) GetPort() int {
 	return v.Port
+}
+
+type Consensus struct {
+	receivedMessage []map[string]interface{}
+}
+
+func (b *Consensus) AddMessage(v *Validator, message map[string]interface{}) {
+	b.receivedMessage = append(b.receivedMessage, message)
+
+	totalMessage := 0
+	blockHashCounter := make(map[string]int)
+	for _, blockHash := range b.receivedMessage {
+		blockHashCounter[blockHash["blockHash"].(string)]++
+		totalMessage++
+	}
+	fmt.Println("block hash counter:", blockHashCounter)
+	handleConsensus(v, blockHashCounter, totalMessage)
+
+}
+
+func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage int) {
+	for blockHash, count := range blockHashCounter {
+		if float64(count)/float64(totalMessage) > 0.6 {
+			fmt.Println("create block with hash:", blockHash)
+			v.Blockchain.CreateBlock(v.TempBlock.Height, v.TempBlock.PreviousHash, v.TempBlock.Transactions)
+			fmt.Printf("This is blockchain of %s \n", v.ValidatorId)
+			v.Blockchain.Print()
+		}
+	}
 }
