@@ -36,7 +36,7 @@ func main() {
 }
 
 func NewValidator(port int) Validator {
-	var blockChain *Blockchain
+	var blockChain Blockchain
 	blockChain = NewBlockchain()
 
 	validatorId := strconv.Itoa(port)
