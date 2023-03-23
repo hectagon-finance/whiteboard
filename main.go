@@ -21,13 +21,13 @@ func main() {
 	transactions := []types.Transaction{trans}
 
 	bc := types.NewBlockchain()
-	prevHash := bc.LastBlock().GetHash()
+	prevHash := bc.LastBlock().Hash
 	bc.CreateBlock(1, prevHash, transactions)
 
-	prevHash = bc.LastBlock().GetHash()
+	prevHash = bc.LastBlock().Hash
 	bc.CreateBlock(2, prevHash, transactions)
 
-	prevHash = bc.LastBlock().GetHash()
+	prevHash = bc.LastBlock().Hash
 	bc.CreateBlock(3, prevHash, transactions)
 	bc.Print()
 }

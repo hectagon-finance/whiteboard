@@ -13,10 +13,10 @@ type Validator struct {
 	ValidatorId  string
 	PublicKey    string
 	PrivateKey   string
-	Blockchain   *Blockchain
+	Blockchain   Blockchain
 	MemPool      MemPool
 	Consensus    Consensus
-	TempBlock    *Block
+	TempBlock    Block
 	Balance      int64
 	Stake        int64
 	Status       string
@@ -69,7 +69,8 @@ type Consensus struct {
 	receivedMessage []map[string]interface{}
 }
 
-func (b *Consensus) AddMessage(v *Validator, message map[string]interface{}) {
+func AddMessage(v *Validator, message map[string]interface{}) {
+	b := v.Consensus
 	b.receivedMessage = append(b.receivedMessage, message)
 
 	totalMessage := 0
@@ -87,7 +88,9 @@ func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage
 	for blockHash, count := range blockHashCounter {
 		if float64(count)/float64(totalMessage) > 0.6 {
 			fmt.Println("create block with hash:", blockHash)
-			v.Blockchain.CreateBlock(v.TempBlock.Height, v.TempBlock.PreviousHash, v.TempBlock.Transactions)
+			preBlockHash := v.Blockchain.LastBlock().Hash
+			v.Blockchain.CreateBlock(v.TempBlock.Height, preBlockHash, v.TempBlock.Transactions)
+			v.Consensus = Consensus{}
 			fmt.Printf("This is blockchain of %s \n", v.ValidatorId)
 			v.Blockchain.Print()
 		}

@@ -7,29 +7,29 @@ import (
 
 type Blockchain struct {
 	// memPool MemPool
-	Chain []*Block
+	Chain []Block
 }
 
 // func (bc *Blockchain) AddTransaction(tx *Transaction) {
 // 	bc.memPool.AddTransaction(tx)
 // }
 
-func NewBlockchain() *Blockchain {
+func NewBlockchain() Blockchain {
 	b := &Block{}
-	bc := new(Blockchain)
+	bc := *new(Blockchain)
 	transactions := []Transaction{}
 	bc.CreateBlock(0, b.Hash, transactions)
 	return bc
 }
 
-func (bc *Blockchain) CreateBlock(height int, previousHash [32]byte, transactions []Transaction) *Block {
+func (bc *Blockchain) CreateBlock(height int, previousHash [32]byte, transactions []Transaction) {
 	b := NewBlock(height, previousHash, transactions)
 	bc.Chain = append(bc.Chain, b)
 
-	return b
+	// return b
 }
 
-func (bc *Blockchain) LastBlock() *Block {
+func (bc *Blockchain) LastBlock() Block {
 	return bc.Chain[len(bc.Chain)-1]
 }
 

@@ -29,8 +29,8 @@ func (b *Block) GetTransactions() []Transaction {
 	return b.Transactions
 }
 
-func NewBlock(Height int, PreviousHash [32]byte, Transactions []Transaction) *Block {
-	b := new(Block)
+func NewBlock(Height int, PreviousHash [32]byte, Transactions []Transaction) Block {
+	b := *new(Block)
 	b.Height = Height
 	b.PreviousHash = PreviousHash
 	b.Transactions = Transactions

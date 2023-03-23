@@ -71,7 +71,7 @@ func HandleMessage(v *Validator, msg []byte) {
 
 	case "blockHash":
 		// check what validator is online
-		v.Consensus.AddMessage(v, message)
+		AddMessage(v, message)
 
 	default:
 		fmt.Println("Default")
