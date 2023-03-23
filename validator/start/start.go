@@ -109,6 +109,9 @@ func StartClient(v *Validator) {
 		defer conn.Close()
 		log.Println("Connected to the server")
 
+		// Check if need to sync with the network
+		// Sync(v)
+
 		ticker := time.NewTicker(3 * time.Second)
 		defer ticker.Stop()
 
@@ -125,9 +128,8 @@ func StartClient(v *Validator) {
 
 func checkMemPool(v *Validator) {
 	if v.MemPool.Size() == 1 {
-		v.TempBlock = NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
+		v.TempBlock = NewBlock(len(v.Blockchain.Chain) + 1, [32]byte{}, v.MemPool.GetTransactions())
 		blockHash := v.TempBlock.GetHash()
-		fmt.Println("Block hash:", blockHash)
 		BroadcastBlockHash(v, blockHash)
 		v.MemPool.Clear()
 	}

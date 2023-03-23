@@ -70,6 +70,7 @@ type Consensus struct {
 }
 
 func AddMessage(v *Validator, message map[string]interface{}) {
+
 	b := v.Consensus
 	b.receivedMessage = append(b.receivedMessage, message)
 
@@ -79,15 +80,13 @@ func AddMessage(v *Validator, message map[string]interface{}) {
 		blockHashCounter[blockHash["blockHash"].(string)]++
 		totalMessage++
 	}
-	fmt.Println("block hash counter:", blockHashCounter)
 	handleConsensus(v, blockHashCounter, totalMessage)
 
 }
 
 func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage int) {
-	for blockHash, count := range blockHashCounter {
-		if float64(count)/float64(totalMessage) > 0.6 {
-			fmt.Println("create block with hash:", blockHash)
+	for _, count := range blockHashCounter {
+		if float64(count)/float64(totalMessage) >= 0.6 {
 			preBlockHash := v.Blockchain.LastBlock().Hash
 			v.Blockchain.CreateBlock(v.TempBlock.Height, preBlockHash, v.TempBlock.Transactions)
 			v.Consensus = Consensus{}

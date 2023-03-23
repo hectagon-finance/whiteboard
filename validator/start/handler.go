@@ -18,20 +18,40 @@ func HandleMessage(v *Validator, msg []byte) {
 	}
 
 	switch message["type"].(string) {
-
-	case "memPool":
+	
+	case "sync":
 		peer_pool_size := message["memPoolSize"].(float64)
-		if v.MemPool.Size() == 0 {
+		if v.MemPool.Size() > 0 {
+			if peer_pool_size == 0 {
+				fmt.Println("Need to sync mempool for validator", message["validatorId"].(string))
+
+				v.ClientsMutex.Lock()
+				validator := v
+				v.ClientsMutex.Unlock()
+
+				validator.Peers = []string{validator.Id(), message["validatorId"].(string)}
+				Sync(validator)
+			}
+		} else {
 			if peer_pool_size > 0 {
 				memPool, err := DecodeMempool([]byte(message["memPool"].(string)))
 				if err != nil {
 					panic(err)
 				}
 				v.MemPool = memPool
-				fmt.Println("Sync mempool")
-				fmt.Println(v.MemPool.Size())
-			} else {
-				fmt.Println("Do nothing")
+
+				blockchain, err := DecodeBlockchain([]byte(message["blockchain"].(string)))
+				if err != nil {
+					panic(err)
+				}
+
+				v.Blockchain = blockchain
+
+				fmt.Println("Sync mempool and blockchain")
+				
+				fmt.Printf("Validator %s: Mempool size: %d\n", v.ValidatorId, v.MemPool.Size())
+				
+				v.Blockchain.Print()
 			}
 		}
 
@@ -58,6 +78,7 @@ func HandleMessage(v *Validator, msg []byte) {
 				BroadcastTransaction(v, tx)
 				v.MemPool.AddTransaction(tx)
 				fmt.Printf("Validator %s: Adding new transaction to mempool: %s\n", v.ValidatorId, tx.Id())
+				fmt.Printf("Validator %s: Mempool size: %d\n", v.ValidatorId, v.MemPool.Size())
 			} else {
 				fmt.Printf("Validator %s: Already have that transaction\n", v.ValidatorId)
 			}
@@ -66,12 +87,13 @@ func HandleMessage(v *Validator, msg []byte) {
 			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.ValidatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
 		}
 	case "peer":
-		fmt.Printf("Validator %s: Valid peers array received from %s: %s\n", v.ValidatorId, message["validatorId"].(string), message["message"].([]interface{}))
 		addPeer(v, message["message"].([]interface{}))
 
 	case "blockHash":
-		// check what validator is online
-		AddMessage(v, message)
+		// check if temp block is empty
+		// if len(v.TempBlock.Transactions) != 0 {
+			AddMessage(v, message)
+		// }
 
 	default:
 		fmt.Println("Default")

@@ -2,12 +2,13 @@ package start
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
-func BroadcastMempool(v *Validator) {
+func Sync(v *Validator){
 
 	// encode validator mempool
 	memByte, err := v.MemPool.Encode()
@@ -15,11 +16,18 @@ func BroadcastMempool(v *Validator) {
 		panic(err)
 	}
 
+	// encode validator blockchain
+	blockchainByte, err := v.Blockchain.Encode()
+	if err != nil {
+		panic(err)
+	}
+
 	message := map[string]interface{}{
-		"type":        "memPool",
+		"type":        "sync",
 		"validatorId": v.Id(),
 		"memPoolSize": v.MemPool.Size(),
 		"memPool":     string(memByte),
+		"blockchain":  string(blockchainByte),
 		"message":     "Hello, I'm validator " + v.Id(),
 	}
 

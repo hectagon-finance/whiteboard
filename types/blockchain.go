@@ -1,18 +1,18 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
 
 type Blockchain struct {
-	// memPool MemPool
 	Chain []Block
 }
 
-// func (bc *Blockchain) AddTransaction(tx *Transaction) {
-// 	bc.memPool.AddTransaction(tx)
-// }
+type BlockchainEncode struct {
+	Chain []BlockEncode
+}
 
 func NewBlockchain() Blockchain {
 	b := &Block{}
@@ -40,4 +40,41 @@ func (bc *Blockchain) Print() {
 		block.Print()
 	}
 	fmt.Printf("%s\n", strings.Repeat("*", 25))
+}
+
+func (bc *Blockchain) Encode() ([]byte, error) {
+	blockchainEncode := BlockchainEncode{}
+	for _, block := range bc.Chain {
+		blockEncode, err := block.Tranform()
+		if err != nil {
+			return nil, err
+		}
+		blockchainEncode.Chain = append(blockchainEncode.Chain, blockEncode)
+	}
+	
+	blockchainByte, err := json.Marshal(blockchainEncode)
+	if err != nil {
+		return nil, err
+	}
+
+	return blockchainByte, nil
+}
+
+func DecodeBlockchain(blockchainByte []byte) (Blockchain, error) {
+	blockchainEncode := BlockchainEncode{}
+	err := json.Unmarshal(blockchainByte, &blockchainEncode)
+	if err != nil {
+		return Blockchain{}, err
+	}
+
+	blockchain := Blockchain{}
+	for _, blockEncode := range blockchainEncode.Chain {
+		block, err := BlockEncodeTransform(blockEncode)
+		if err != nil {
+			return Blockchain{}, err
+		}
+		blockchain.Chain = append(blockchain.Chain, block)
+	}
+
+	return blockchain, nil
 }

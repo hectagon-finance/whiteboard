@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type Block struct {
@@ -11,6 +12,13 @@ type Block struct {
 	Hash         [32]byte
 	PreviousHash [32]byte
 	Transactions []Transaction
+}
+
+type BlockEncode struct {
+	Height       string
+	Hash         string
+	PreviousHash string
+	Transactions []TransactionEncode
 }
 
 func (b *Block) Id() int {
@@ -59,4 +67,27 @@ func (b *Block) Print() {
 	for _, tx := range b.Transactions {
 		fmt.Println("Transaction:", string(tx.Data))
 	}
+}
+
+func (b *Block) Tranform() (BlockEncode, error) {
+	blockEncode := BlockEncode{}
+	for _, tx := range b.Transactions {
+		blockEncode.Transactions = append(blockEncode.Transactions, tx.Tranform())
+	}
+
+	return blockEncode, nil
+}
+
+func BlockEncodeTransform(blockEncode BlockEncode) (Block, error) {
+
+	block := Block{}
+
+	block.Height, _ = strconv.Atoi(blockEncode.Height)
+	copy(block.Hash[:], blockEncode.Hash)
+	copy(block.PreviousHash[:], blockEncode.PreviousHash)
+	for _, txEncode := range blockEncode.Transactions {
+		block.Transactions = append(block.Transactions, txEncode.Tranform())
+	}
+
+	return block, nil
 }
