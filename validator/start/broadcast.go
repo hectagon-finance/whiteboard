@@ -2,7 +2,6 @@ package start
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"

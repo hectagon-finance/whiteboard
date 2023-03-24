@@ -20,20 +20,19 @@ func HandleMessage(v *Validator, msg []byte) {
 	switch message["type"].(string) {
 	
 	case "sync":
+		fmt.Println("Sync message received")
 		peer_pool_size := message["memPoolSize"].(float64)
 		if v.MemPool.Size() > 0 {
+			
 			if peer_pool_size == 0 {
 				fmt.Println("Need to sync mempool for validator", message["validatorId"].(string))
-
-				v.ClientsMutex.Lock()
 				validator := v
-				v.ClientsMutex.Unlock()
-
 				validator.Peers = []string{validator.Id(), message["validatorId"].(string)}
 				Sync(validator)
 			}
 		} else {
 			if peer_pool_size > 0 {
+				fmt.Println(v.MemPool.Size(), peer_pool_size)
 				memPool, err := DecodeMempool([]byte(message["memPool"].(string)))
 				if err != nil {
 					panic(err)
