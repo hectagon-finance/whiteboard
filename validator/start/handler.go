@@ -51,6 +51,7 @@ func HandleMessage(v *Validator, msg []byte) {
 				fmt.Printf("Validator %s: Mempool size: %d\n", v.ValidatorId, v.MemPool.Size())
 				
 				v.Blockchain.Print()
+
 			}
 		}
 
@@ -89,10 +90,7 @@ func HandleMessage(v *Validator, msg []byte) {
 		addPeer(v, message["message"].([]interface{}))
 
 	case "blockHash":
-		// check if temp block is empty
-		// if len(v.TempBlock.Transactions) != 0 {
 			AddMessage(v, message)
-		// }
 
 	default:
 		fmt.Println("Default")

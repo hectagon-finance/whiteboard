@@ -112,26 +112,30 @@ func StartClient(v *Validator) {
 		// Check if need to sync with the network
 		// Sync(v)
 		// time.Sleep(3 * time.Second)
-		
-		ticker := time.NewTicker(3 * time.Second)
-		defer ticker.Stop()
 
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		counterr := 0
 		for {
 			select {
 			case <-ticker.C:
 				// BroadcastMempool(v)
 				BroadcastPeer(v)
-				checkMemPool(v)
+				counterr = checkMemPool(v, counterr)		
 			}
 		}
 	}
 }
 
-func checkMemPool(v *Validator) {
-	if v.MemPool.Size() == 3  {
-		v.TempBlock = NewBlock(len(v.Blockchain.Chain) + 1, [32]byte{}, v.MemPool.GetTransactions())
+func checkMemPool(v *Validator, counter int) int {
+	if v.MemPool.Size() == 3  || counter == 10 {
+		v.TempBlock = NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
 		blockHash := v.TempBlock.GetHash()
 		BroadcastBlockHash(v, blockHash)
 		v.MemPool.Clear()
+		return 0
 	}
+
+	counter++
+	return counter
 }
