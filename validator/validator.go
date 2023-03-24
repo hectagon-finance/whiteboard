@@ -66,22 +66,22 @@ func (v *Validator) GetPort() int {
 }
 
 type Consensus struct {
-	receivedMessage []map[string]interface{}
+	ReceivedMessage []map[string]interface{}
 }
 
 func AddMessage(v *Validator, message map[string]interface{}) {
 
 	b := v.Consensus
-	b.receivedMessage = append(b.receivedMessage, message)
+	b.ReceivedMessage = append(b.ReceivedMessage, message)
 
 	totalMessage := 0
 	blockHashCounter := make(map[string]int)
-	for _, blockHash := range b.receivedMessage {
+	for _, blockHash := range b.ReceivedMessage {
 		blockHashCounter[blockHash["blockHash"].(string)]++
 		totalMessage++
 	}
 	handleConsensus(v, blockHashCounter, totalMessage)
-
+	fmt.Println(len(b.ReceivedMessage))
 }
 
 func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage int) {
@@ -91,7 +91,7 @@ func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage
 			v.Blockchain.CreateBlock(v.TempBlock.Height, preBlockHash, v.TempBlock.Transactions)
 			v.Consensus = Consensus{}
 			fmt.Printf("This is blockchain of %s \n", v.ValidatorId)
-			v.Blockchain.Print()
+			// v.Blockchain.Print()
 		}
 	}
 }

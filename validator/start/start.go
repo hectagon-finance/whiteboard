@@ -2,6 +2,7 @@ package start
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,27 +116,35 @@ func StartClient(v *Validator) {
 
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
-		counterr := 0
+		counter := 0
 		for {
 			select {
 			case <-ticker.C:
 				// BroadcastMempool(v)
 				BroadcastPeer(v)
-				counterr = checkMemPool(v, counterr)		
+				counter = checkMemPool(v, counter)
 			}
 		}
 	}
 }
 
 func checkMemPool(v *Validator, counter int) int {
-	if v.MemPool.Size() == 3  || counter == 10 {
+	if v.MemPool.Size() == 2 || counter == 5 {
+		fmt.Println("check mempool")
 		v.TempBlock = NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
 		blockHash := v.TempBlock.GetHash()
+		blockHashSlice := blockHash[:]
+		blockHashStr := hex.EncodeToString(blockHashSlice)
+		message := map[string]interface{}{
+			"type":        "blockHash",
+			"validatorId": v.ValidatorId,
+			"blockHash":   blockHashStr,
+		}
+		v.Consensus.ReceivedMessage = append(v.Consensus.ReceivedMessage, message)
 		BroadcastBlockHash(v, blockHash)
 		v.MemPool.Clear()
 		return 0
 	}
-
 	counter++
 	return counter
 }
