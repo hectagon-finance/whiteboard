@@ -2,6 +2,7 @@ package types
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -75,16 +76,28 @@ func (b *Block) Tranform() (BlockEncode, error) {
 		blockEncode.Transactions = append(blockEncode.Transactions, tx.Tranform())
 	}
 
+	blockEncode.Height = strconv.Itoa(b.Height)
+	blockHashSlice := b.Hash[:]
+	blockEncode.Hash = hex.EncodeToString(blockHashSlice)
+
+	blockHashSlice = b.PreviousHash[:]
+	blockEncode.PreviousHash = hex.EncodeToString(blockHashSlice)
+
 	return blockEncode, nil
 }
 
 func BlockEncodeTransform(blockEncode BlockEncode) (Block, error) {
-
 	block := Block{}
 
 	block.Height, _ = strconv.Atoi(blockEncode.Height)
-	copy(block.Hash[:], blockEncode.Hash)
-	copy(block.PreviousHash[:], blockEncode.PreviousHash)
+	// convert string to byte
+	blockHash, _ := hex.DecodeString(blockEncode.Hash)
+	copy(block.Hash[:], blockHash)
+
+	// convert string to byte
+	blockHash, _ = hex.DecodeString(blockEncode.PreviousHash)
+	copy(block.PreviousHash[:], blockHash)
+
 	for _, txEncode := range blockEncode.Transactions {
 		block.Transactions = append(block.Transactions, txEncode.Tranform())
 	}

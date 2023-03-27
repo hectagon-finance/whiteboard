@@ -8,15 +8,31 @@ import (
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
+var Chan_1 = make(chan Msg, 100)
+
+// amount of transactions to remove from mempool
+var Chan_2 = make(chan int)
+
+var DraftBlock = Block{} // Propose future block
+
+var Port = ""
+
+var Peers = []string{}
+
+var Chain = Blockchain{}
+
+var ReceivedBlockHash = make(map[string]string)
+
+var MemPoolValidator = MemPool{}
+
+type Msg struct {
+	memPool MemPool
+	heigt   int
+}
+
 type Validator struct {
-	Addr 		 string
 	PublicKey    string
 	PrivateKey   string
-	Blockchain   Blockchain
-	MemPool      MemPool
-	LastBlock    Block
-	Port         string
-	Peers        []string
 }
 
 func (v *Validator) GetPublicKey() string {
@@ -25,18 +41,6 @@ func (v *Validator) GetPublicKey() string {
 
 func (v *Validator) GetPrivateKey() string {
 	return v.PrivateKey
-}
-
-func (v *Validator) GetMemPool() MemPool {
-	return v.MemPool
-}
-
-func (v *Validator) GetLastBlock() Block {
-	return v.LastBlock
-}
-
-func (v *Validator) GetPort() string {
-	return v.Port
 }
 
 type Consensus struct {
@@ -66,35 +70,23 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("recv: %s", message)
 
-		// Handle the message coming
 		HandleMessage(v, message)
+		k := <- Chan_2
+		MemPoolValidator.Transactions = MemPoolValidator.Transactions[k:]
 
+		// select{
+		// 	case k := <- Chan_2:
+		// 		// Cut off transactions from mempool
+		// 		log.Print("Serve *** Cut off transactions from mempool")
+		// 		MemPoolValidator.Transactions = MemPoolValidator.Transactions[k:]
+		// 		break	
+		// 	default:
+		// 		HandleMessage(v, message)
+		// }
+
+		// Handle the message coming
+		
+
+		
 	}
 }
-
-// func AddMessage(v *Validator, message map[string]interface{}) {
-
-// 	b := v.Consensus
-// 	b.receivedMessage = append(b.receivedMessage, message)
-
-// 	totalMessage := 0
-// 	blockHashCounter := make(map[string]int)
-// 	for _, blockHash := range b.receivedMessage {
-// 		blockHashCounter[blockHash["blockHash"].(string)]++
-// 		totalMessage++
-// 	}
-// 	handleConsensus(v, blockHashCounter, totalMessage)
-
-// }
-
-// func handleConsensus(v *Validator, blockHashCounter map[string]int, totalMessage int) {
-// 	for _, count := range blockHashCounter {
-// 		if float64(count)/float64(totalMessage) >= 0.6 {
-// 			preBlockHash := v.Blockchain.LastBlock().Hash
-// 			v.Blockchain.CreateBlock(v.TempBlock.Height, preBlockHash, v.TempBlock.Transactions)
-// 			v.Consensus = Consensus{}
-// 			fmt.Printf("This is blockchain of %s \n", v.ValidatorId)
-// 			v.Blockchain.Print()
-// 		}
-// 	}
-// }

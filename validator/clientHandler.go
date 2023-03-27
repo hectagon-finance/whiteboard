@@ -1,49 +1,78 @@
 package validator
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"time"
 
+	"github.com/gorilla/websocket"
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
-type Msg struct {
-	memPool MemPool
-}
-
-var Chan_1 = make(chan Msg, 100)
-
-var DraftBlock Block
-
 func ClientHandler(v *Validator, is_genesis string) {
 	if is_genesis != "genesis" {
-		Sync(v)
+		u := url.URL{Scheme: "ws", Host: "localhost:" + is_genesis, Path: "/ws"}
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil) 
+		defer conn.Close()
+		if err != nil {
+			log.Fatal("dial:", err)
+		}
+
+		msg := map[string]interface{}{
+			"type": "sync all request",
+			"from": Port,
+		}
+
+		msgByte, err := json.Marshal(msg)
+		if err != nil {
+			log.Fatal("marshal:", err)
+		}
+		log.Println("Sending sync all request from", Port, "to", is_genesis)
+		conn.WriteMessage(websocket.TextMessage, msgByte)
 	}
-	fmt.Println("Server is running on port", v.Addr)
+	fmt.Println("Server is running on port: ", Port)
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/ws", v.Serve)
-	log.Fatal(http.ListenAndServe(v.Addr, nil))
+	log.Fatal(http.ListenAndServe("localhost:" + Port, nil))
 }
 
-func broadcastBlockHash() {
+func BroadcastBlockHash() {
 	for {
-		i := 0
 		msg := <- Chan_1
-		if (i == 5) || (i == 23) {
-			log.Println(msg)
-		}
-	}
-	// if v.MemPool.Size() == 3  || counter == 10 {
-	// 	v.TempBlock = NewBlock(1, [32]byte{}, v.MemPool.GetTransactions())
-	// 	blockHash := v.TempBlock.GetHash()
-	// 	BroadcastBlockHash(v, blockHash)
-	// 	v.MemPool.Clear()
-	// 	return 0
-	// }
+		i := 0
+		log.Println("** Client Handler** bool:", (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)))
+		if (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)) {
+			var k int
 
-	// counter++
-	// return counter
+			if msg.memPool.Size() >= msg.memPool.CutOff {
+				k = msg.memPool.CutOff
+			} else {
+				k = msg.memPool.Size()
+			}
+
+			DraftBlock = NewBlock(msg.heigt, [32]byte{}, msg.memPool.Transactions[:k])
+
+			// broadcast block hash
+			blockHashSlice := DraftBlock.Hash[:]
+			blockHashStr := hex.EncodeToString(blockHashSlice)
+
+			message := map[string]interface{}{
+				"type":        "blockHash",
+				"from": 	   Port,
+				"blockHash":   blockHashStr,
+			}
+
+			Chan_2 <- k
+			
+			ConnectAndSendMessage(message)
+		}
+		time.Sleep(100 * time.Millisecond)
+		i ++
+	}
 }

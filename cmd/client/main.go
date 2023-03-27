@@ -23,7 +23,7 @@ func main() {
 	// gob.Register(elliptic.P256())
 	if os.Args[1] == "create-wallet" {
 		//check client have wallet => can't create
-		if checkHaveWallet("public_key.txt", true) == false {
+		if checkHaveWallet("./cmd/client/public_key.txt", true) == false {
 			privateKey := crypto.GeneratePrivateKey()
 			publicKey := privateKey.PublicKey()
 			address := publicKey.Address()
@@ -35,7 +35,7 @@ func main() {
 			fmt.Println("Address is:", address)
 
 			// create file txt in root folder
-			file, err := os.Create("public_key.txt")
+			file, err := os.Create("./cmd/client/public_key.txt")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -51,9 +51,9 @@ func main() {
 	}
 
 	if os.Args[1] == "send" && os.Args[3] == "-k" {
-		if checkHaveWallet("public_key.txt", false) {
+		if checkHaveWallet("./cmd/client/public_key.txt", false) {
 			// Open file public_key.txt
-			file, err := os.Open("public_key.txt")
+			file, err := os.Open("./cmd/client/public_key.txt")
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -140,7 +140,6 @@ func sendTransaction(validatorId string, tx Transaction) {
 	message := map[string]interface{}{
 		"type":          "transaction",
 		"from":          "client",
-		"validatorId":   "fake",
 		"transactionId": tx.Id(),
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,

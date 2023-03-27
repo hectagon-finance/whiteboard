@@ -1,33 +1,51 @@
 package main
 
 import (
-	"github.com/hectagon-finance/whiteboard/types"
-	"github.com/hectagon-finance/whiteboard/utils/crypto"
+	"log"
+	"os"
+	"time"
+
+	. "github.com/hectagon-finance/whiteboard/types"
+	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
 func main() {
-	privateKey := crypto.GeneratePrivateKey()
-	publicKey := privateKey.PublicKey()
+	if len(os.Args) >= 2 {
+		current_validator_id := os.Args[1]
+		is_genesis := os.Args[2]
 
-	msg := []byte("Hello World")
+		// Create two validators
+		v := NewValidator(current_validator_id, is_genesis)
 
-	sig, err := privateKey.Sign(msg)
-	if err != nil {
-		panic(err)
+		// Start the validators
+		go ClientHandler(&v, is_genesis)
+
+		go BroadcastBlockHash()
+
+		// Wait for a few seconds to let the validators establish connections
+		time.Sleep(100 * time.Second)
 	}
+}
+// ./main 8080 genesis ; ./main 9000 8080
+func NewValidator(port string, is_genenis string) Validator {
+	Port = port
+	log.Println("Port: ", Port)
+	Peers = append(Peers, port)
 
-	trans := types.NewTransaction(publicKey, *sig, msg)
+	if is_genenis == "genesis" {
+		// genesis validator	
+		Chain = NewBlockchain()
+	}else {
+		// sync with other is_genenis (port)
+		Peers = append(Peers, is_genenis)
+	}
+	
+	publicKey := "public-key"
+	privateKey := "private-key"
+	MemPoolValidator = NewMemPool()
 
-	transactions := []types.Transaction{trans}
-
-	bc := types.NewBlockchain()
-	prevHash := bc.LastBlock().Hash
-	bc.CreateBlock(1, prevHash, transactions)
-
-	prevHash = bc.LastBlock().Hash
-	bc.CreateBlock(2, prevHash, transactions)
-
-	prevHash = bc.LastBlock().Hash
-	bc.CreateBlock(3, prevHash, transactions)
-	bc.Print()
+	return Validator{
+		PublicKey:   publicKey,
+		PrivateKey:  privateKey,
+	}
 }

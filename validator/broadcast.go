@@ -5,43 +5,18 @@ import (
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
-func Sync(v *Validator){
-
-	// encode validator mempool
-	memByte, err := v.MemPool.Encode()
-	if err != nil {
-		panic(err)
-	}
-
-	// encode validator blockchain
-	blockchainByte, err := v.Blockchain.Encode()
-	if err != nil {
-		panic(err)
-	}
-
-	message := map[string]interface{}{
-		"type":        "sync",
-		"memPoolSize": v.MemPool.Size(),
-		"memPool":     string(memByte),
-		"blockchain":  string(blockchainByte),
-		"message":     "Hello, I'm validator " + v.Port,
-	}
-
-	ConnectAndSendMessage(v, message)
-}
-
-func BroadcastPeer(v *Validator) {
+func BroadcastPeer() {
 
 	message := map[string]interface{}{
 		"type":        "peer",
-		"from":        v.Port,
-		"message":     v.Peers,
+		"from":        Port,
+		"message":     Peers,
 	}
 
-	ConnectAndSendMessage(v, message)
+	ConnectAndSendMessage(message)
 }
 
-func BroadcastTransaction(v *Validator, tx Transaction) {
+func BroadcastTransaction(tx Transaction) {
 	publicKey := tx.PublicKey
 	publicKeyStr := publicKey.PublicKeyStr()
 
@@ -50,25 +25,12 @@ func BroadcastTransaction(v *Validator, tx Transaction) {
 
 	message := map[string]interface{}{
 		"type":          "transaction",
-		"from":          "client",
+		"from":          Port,
 		"transactionId": tx.Id(),
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,
 		"data":          string(tx.Data),
 	}
 
-	ConnectAndSendMessage(v, message)
+	ConnectAndSendMessage(message)
 }
-
-// func BroadcastBlockHash(v *Validator, blockHash [32]byte) {
-// 	blockHashSlice := blockHash[:]
-// 	blockHashStr := hex.EncodeToString(blockHashSlice)
-
-// 	message := map[string]interface{}{
-// 		"type":        "blockHash",
-// 		"validatorId": v.ValidatorId,
-// 		"blockHash":   blockHashStr,
-// 	}
-
-// 	ConnectAndSendMessage(v, message)
-// }

@@ -8,9 +8,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func ConnectAndSendMessage(v *Validator, message map[string]interface{}) {
-	for _, peer := range v.Peers {
-		if peer != v.Port {
+func ConnectAndSendMessage(message map[string]interface{}) {
+	for _, peer := range Peers {
+		if peer != Port {
 			u := url.URL{Scheme: "ws", Host: "localhost:" + peer, Path: "/ws"}
 			conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 			if err != nil {

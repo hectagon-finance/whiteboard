@@ -17,7 +17,9 @@ func main() {
 		v := NewValidator(current_validator_id, is_genesis)
 
 		// Start the validators
-		ClientHandler(&v, is_genesis)
+		go ClientHandler(&v, is_genesis)
+
+		go BroadcastBlockHash()
 
 		// Wait for a few seconds to let the validators establish connections
 		time.Sleep(100 * time.Second)
@@ -25,27 +27,23 @@ func main() {
 }
 // ./main 8080 genesis ; ./main 9000 8080
 func NewValidator(port string, is_genenis string) Validator {
-	var blockChain Blockchain
-	peers := []string{}
-	peers = append(peers, port)
+	Port = port
+	Peers = append(Peers, port)
+
 	if is_genenis == "genesis" {
 		// genesis validator	
-		blockChain = NewBlockchain()
+		Chain = NewBlockchain()
 	}else {
 		// sync with other is_genenis (port)
-		peers = append(peers, is_genenis)
+		Peers = append(Peers, is_genenis)
 	}
 	
 	publicKey := "public-key"
 	privateKey := "private-key"
-	memPool := NewMemPool()
+	MemPoolValidator = NewMemPool()
 
 	return Validator{
 		PublicKey:   publicKey,
 		PrivateKey:  privateKey,
-		Blockchain:  blockChain,
-		MemPool:     memPool,
-		Port:        port,
-		Peers:       peers,
 	}
 }

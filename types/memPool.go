@@ -4,6 +4,7 @@ import "encoding/json"
 
 type MemPool struct {
 	Transactions []Transaction
+	CutOff	   int
 }
 
 type MemPoolEncode struct {
@@ -27,7 +28,9 @@ func (m *MemPool) Clear() {
 }
 
 func NewMemPool() MemPool {
-	return MemPool{}
+	memPool := MemPool{}
+	memPool.CutOff = 3
+	return memPool
 }
 
 func (m *MemPool) Encode() ([]byte, error) {
@@ -43,7 +46,7 @@ func (m *MemPool) Encode() ([]byte, error) {
 	return memByte, nil
 }
 
-func DecodeMempool(memBye []byte) (MemPool, error) {
+func DecodeMemPool(memBye []byte) (MemPool, error) {
 	memPoolencode := MemPoolEncode{}
 	err := json.Unmarshal(memBye, &memPoolencode)
 	if err != nil {
