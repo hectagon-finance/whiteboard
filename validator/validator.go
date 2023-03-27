@@ -21,7 +21,7 @@ type Validator struct {
 	Stake        int64
 	Status       string
 	LastBlock    Block
-	Port         int
+	Port         string
 	HttpServer   *http.Server
 	ClientsMutex sync.Mutex
 	Clients      map[*websocket.Conn]bool
@@ -61,7 +61,7 @@ func (v *Validator) GetLastBlock() Block {
 	return v.LastBlock
 }
 
-func (v *Validator) GetPort() int {
+func (v *Validator) GetPort() string {
 	return v.Port
 }
 
