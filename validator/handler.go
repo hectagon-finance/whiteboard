@@ -36,16 +36,12 @@ func HandleMessage(v *Validator, msg []byte) {
 	
 	case "sync all request":
 		SyncAllRequestHandler(message)
-		break
 	case "sync all response":
 		SyncAllResponseHandler(message)
-		break
 	case "sync draft block request":
 		SyncBlockDraftRequestHandler(message)
-		break
 	case "sync draft block response":
 		SyncBlockDraftResponseHandler(message)
-		break
 	case "transaction":
 
 		publicKeyStr := message["publicKey"].(string)
@@ -80,12 +76,10 @@ func HandleMessage(v *Validator, msg []byte) {
 			fmt.Print("Invalid")
 			fmt.Printf("Validator %s: Invalid transaction received from %s: %s\n", Port, message["from"].(string), tx.Id())
 		}
-		break
 	case "blockHash":
 		ReceivedBlockHash[message["from"].(string)] = message["blockHash"].(string)
 		log.Println("handler.go ** before checkCondition")
 		checkCondition()
-		break
 	default:
 		fmt.Println("Default")
 	}

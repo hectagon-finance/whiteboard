@@ -46,7 +46,7 @@ func BroadcastBlockHash() {
 	for {
 		msg := <- Chan_1
 		i := 0
-		log.Println("** Client Handler** bool:", (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)))
+		log.Print("** Client Handler** bool:", (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)))
 		if (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)) {
 			var k int
 

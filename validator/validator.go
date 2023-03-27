@@ -44,7 +44,7 @@ func (v *Validator) GetPrivateKey() string {
 }
 
 type Consensus struct {
-	receivedMessage []map[string]interface{}
+	ReceivedMessage []map[string]interface{}
 }
 
 func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
@@ -73,20 +73,5 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 		HandleMessage(v, message)
 		k := <- Chan_2
 		MemPoolValidator.Transactions = MemPoolValidator.Transactions[k:]
-
-		// select{
-		// 	case k := <- Chan_2:
-		// 		// Cut off transactions from mempool
-		// 		log.Print("Serve *** Cut off transactions from mempool")
-		// 		MemPoolValidator.Transactions = MemPoolValidator.Transactions[k:]
-		// 		break	
-		// 	default:
-		// 		HandleMessage(v, message)
-		// }
-
-		// Handle the message coming
-		
-
-		
 	}
 }
