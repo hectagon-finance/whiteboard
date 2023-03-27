@@ -1,4 +1,4 @@
-package start
+package validator
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	"github.com/hectagon-finance/whiteboard/utils/crypto"
-	. "github.com/hectagon-finance/whiteboard/validator"
 )
 
 func HandleMessage(v *Validator, msg []byte) {
@@ -25,9 +24,9 @@ func HandleMessage(v *Validator, msg []byte) {
 		if v.MemPool.Size() > 0 {
 			
 			if peer_pool_size == 0 {
-				fmt.Println("Need to sync mempool for validator", message["validatorId"].(string))
+				fmt.Println("Need to sync mempool for validator", message["Port"].(string))
 				validator := v
-				validator.Peers = []string{validator.Id(), message["validatorId"].(string)}
+				validator.Peers = []string{validator.Port, message["Port"].(string)}
 				Sync(validator)
 			}
 		} else {
@@ -48,7 +47,7 @@ func HandleMessage(v *Validator, msg []byte) {
 
 				fmt.Println("Sync mempool and blockchain")
 				
-				fmt.Printf("Validator %s: Mempool size: %d\n", v.ValidatorId, v.MemPool.Size())
+				fmt.Printf("Validator %s: Mempool size: %d\n", v.Port, v.MemPool.Size())
 				
 				v.Blockchain.Print()
 
@@ -74,23 +73,23 @@ func HandleMessage(v *Validator, msg []byte) {
 
 		if tx.Signature.Verify(*publicKey, tx.Data) {
 			if checkTransaction(v, tx) {
-				fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.ValidatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
+				fmt.Printf("Validator %s: Valid transaction received from %s %s: %s\n", v.Port, message["from"].(string), message["Port"].(string), tx.Id())
 				BroadcastTransaction(v, tx)
 				v.MemPool.AddTransaction(tx)
-				fmt.Printf("Validator %s: Adding new transaction to mempool: %s\n", v.ValidatorId, tx.Id())
-				fmt.Printf("Validator %s: Mempool size: %d\n", v.ValidatorId, v.MemPool.Size())
+				fmt.Printf("Validator %s: Adding new transaction to mempool: %s\n", v.Port, tx.Id())
+				fmt.Printf("Validator %s: Mempool size: %d\n", v.Port, v.MemPool.Size())
 			} else {
-				fmt.Printf("Validator %s: Already have that transaction\n", v.ValidatorId)
+				fmt.Printf("Validator %s: Already have that transaction\n", v.Port)
 			}
 		} else {
 			fmt.Print("Invalid")
-			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.ValidatorId, message["from"].(string), message["validatorId"].(string), tx.Id())
+			fmt.Printf("Validator %s: Invalid transaction received from %s %s: %s\n", v.Port, message["from"].(string), message["Port"].(string), tx.Id())
 		}
 	case "peer":
 		addPeer(v, message["message"].([]interface{}))
 
 	case "blockHash":
-			AddMessage(v, message)
+			// AddMessage(v, message)
 
 	default:
 		fmt.Println("Default")
@@ -109,7 +108,7 @@ func addPeer(v *Validator, peers []interface{}) {
 		}
 
 		if !alreadyhave {
-			fmt.Println("Validator", v.ValidatorId, ": Adding new peer", peer.(string))
+			fmt.Println("Validator", v.Port, ": Adding new peer", peer.(string))
 			v.Peers = append(v.Peers, peer.(string))
 		}
 

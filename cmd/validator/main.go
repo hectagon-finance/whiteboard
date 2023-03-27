@@ -6,7 +6,6 @@ import (
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
-	. "github.com/hectagon-finance/whiteboard/validator/start"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 		v := NewValidator(current_validator_id, is_genesis)
 
 		// Start the validators
-		Start(&v)
+		ClientHandler(&v, is_genesis)
 
 		// Wait for a few seconds to let the validators establish connections
 		time.Sleep(100 * time.Second)
@@ -35,7 +34,6 @@ func NewValidator(port string, is_genenis string) Validator {
 	}else {
 		// sync with other is_genenis (port)
 		peers = append(peers, is_genenis)
-		
 	}
 	
 	publicKey := "public-key"
