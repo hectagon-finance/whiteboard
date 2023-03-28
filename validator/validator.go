@@ -8,7 +8,7 @@ import (
 	. "github.com/hectagon-finance/whiteboard/types"
 )
 
-var Chan_1 = make(chan Msg, 100)
+var Chan_1 = make(chan Chan1Message, 100)
 
 // amount of transactions to remove from mempool
 var Chan_2 = make(chan int)
@@ -24,6 +24,13 @@ var Chain = Blockchain{}
 var ReceivedBlockHash = make(map[string]string)
 
 var MemPoolValidator = MemPool{}
+
+var ShouldReceiveTxFromPeer = true
+
+type Chan1Message struct {
+	Time  bool
+	Msg   Msg	
+}
 
 type Msg struct {
 	memPool MemPool

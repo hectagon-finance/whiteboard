@@ -8,7 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"time"
+
+	// "time"
 
 	"github.com/gorilla/websocket"
 	. "github.com/hectagon-finance/whiteboard/types"
@@ -44,35 +45,71 @@ func ClientHandler(v *Validator, is_genesis string) {
 
 func BroadcastBlockHash() {
 	for {
-		msg := <- Chan_1
-		i := 0
-		log.Print("** Client Handler** bool:", (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)))
-		if (DraftBlock.Hash == [32]byte{}) && ( (i == 10000) || (msg.memPool.Size() >= msg.memPool.CutOff)) {
-			var k int
+		a := <- Chan_1
+		msg := a.Msg
+		time := a.Time
 
-			if msg.memPool.Size() >= msg.memPool.CutOff {
-				k = msg.memPool.CutOff
-			} else {
-				k = msg.memPool.Size()
+		if time == true{
+			if (DraftBlock.Hash == [32]byte{}) {
+				var k int
+
+				if msg.memPool.Size() >= msg.memPool.CutOff {
+					k = msg.memPool.CutOff
+				} else {
+					k = msg.memPool.Size()
+				}
+
+				DraftBlock = NewBlock(msg.heigt, [32]byte{}, msg.memPool.Transactions[:k])
+
+				// broadcast block hash
+				blockHashSlice := DraftBlock.Hash[:]
+				blockHashStr := hex.EncodeToString(blockHashSlice)
+
+				message := map[string]interface{}{
+					"type":        "blockHash",
+					"from": 	   Port,
+					"blockHash":   blockHashStr,
+				}
+				ShouldReceiveTxFromPeer = false
+				Chan_2 <- k
+				
+				ConnectAndSendMessage(message)
 			}
+		} else {
+			log.Print("** routine2: Client Handler** bool:", (DraftBlock.Hash == [32]byte{}) && (msg.memPool.Size() >= msg.memPool.CutOff))
 
-			DraftBlock = NewBlock(msg.heigt, [32]byte{}, msg.memPool.Transactions[:k])
+			if (DraftBlock.Hash == [32]byte{}) && (msg.memPool.Size() >= msg.memPool.CutOff) {
+				var k int
 
-			// broadcast block hash
-			blockHashSlice := DraftBlock.Hash[:]
-			blockHashStr := hex.EncodeToString(blockHashSlice)
+				if msg.memPool.Size() >= msg.memPool.CutOff {
+					k = msg.memPool.CutOff
+				} else {
+					k = msg.memPool.Size()
+				}
 
-			message := map[string]interface{}{
-				"type":        "blockHash",
-				"from": 	   Port,
-				"blockHash":   blockHashStr,
+				DraftBlock = NewBlock(msg.heigt, [32]byte{}, msg.memPool.Transactions[:k])
+
+				// broadcast block hash
+				blockHashSlice := DraftBlock.Hash[:]
+				blockHashStr := hex.EncodeToString(blockHashSlice)
+
+				message := map[string]interface{}{
+					"type":        "blockHash",
+					"from": 	   Port,
+					"blockHash":   blockHashStr,
+				}
+				ShouldReceiveTxFromPeer = false
+				Chan_2 <- k
+				
+				ConnectAndSendMessage(message)
 			}
-
-			Chan_2 <- k
-			
-			ConnectAndSendMessage(message)
 		}
-		time.Sleep(100 * time.Millisecond)
-		i ++
 	}
 }
+
+// func Timer(){
+// 	for {
+// 		time.Sleep(5 * time.Second)
+// 		Chan_1 <- Chan1Message{true, Msg{MemPoolValidator, Chain.Height}}
+// 	}
+// }

@@ -3,6 +3,7 @@ package validator
 import (
 
 	. "github.com/hectagon-finance/whiteboard/types"
+	"github.com/hectagon-finance/whiteboard/utils"
 )
 
 func BroadcastPeer() {
@@ -22,6 +23,10 @@ func BroadcastTransaction(tx Transaction) {
 
 	signature := tx.Signature
 	signatureStr := signature.SignatureStr()
+ 
+	blockHashStr := utils.Byte32toStr(Chain.LastBlock().Hash)
+
+
 
 	message := map[string]interface{}{
 		"type":          "transaction",
@@ -30,6 +35,7 @@ func BroadcastTransaction(tx Transaction) {
 		"publicKey":     publicKeyStr,
 		"signature":     signatureStr,
 		"data":          string(tx.Data),
+		"latestBlockHash":   blockHashStr,
 	}
 
 	ConnectAndSendMessage(message)

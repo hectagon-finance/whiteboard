@@ -34,7 +34,7 @@ func SyncBlockDraftRequestHandler(message map[string]interface{}){
 	msg := map[string]interface{}{
 		"type": "sync draft block response",
 		"from": Port,
-		"result": resultBytes,
+		"result": string(resultBytes),
 	}
 	msgByte, err := json.Marshal(msg)
 	if err != nil {
@@ -56,21 +56,13 @@ func SyncBlockDraftResponseHandler(message map[string]interface{}){
 		Chain.CreateBlock(newBlock.Height, newBlock.PreviousHash, newBlock.Transactions)
 	} else {
 		Chain = blockchain
+		Chain.Print()
 	}
 }
 
 func SyncAllRequestHandler(message map[string]interface{}){
 	Chain.Print()
 	// TODO: add new mempool to everyone in the network
-	existed := false
-	for _, peer := range Peers {
-		if peer == message["from"].(string) {
-			existed = true
-		}
-	}
-	if !existed {
-		Peers = append(Peers, message["from"].(string))
-	}
 
 	chainBytes, err := Chain.Encode()
 	if err != nil {

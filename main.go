@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
@@ -23,7 +22,9 @@ func main() {
 		go BroadcastBlockHash()
 
 		// Wait for a few seconds to let the validators establish connections
-		time.Sleep(100 * time.Second)
+		for {
+			
+		}
 	}
 }
 // ./main 8080 genesis ; ./main 9000 8080

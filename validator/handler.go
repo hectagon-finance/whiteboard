@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	. "github.com/hectagon-finance/whiteboard/types"
+	"github.com/hectagon-finance/whiteboard/utils"
 	"github.com/hectagon-finance/whiteboard/utils/crypto"
 )
 
@@ -19,6 +19,7 @@ func HandleMessage(v *Validator, msg []byte) {
 		fmt.Println("Error unmarshaling the message:", err)
 		return
 	}
+
 	if message["from"].(string) != "client" {
 		exist := false
 		for _, peer := range Peers {
@@ -43,7 +44,7 @@ func HandleMessage(v *Validator, msg []byte) {
 	case "sync draft block response":
 		SyncBlockDraftResponseHandler(message)
 	case "transaction":
-
+		var lastBlockHashFromMessage string
 		publicKeyStr := message["publicKey"].(string)
 		signatureStr := message["signature"].(string)
 
@@ -61,14 +62,28 @@ func HandleMessage(v *Validator, msg []byte) {
 
 		if tx.Signature.Verify(*publicKey, tx.Data) {
 			fmt.Printf("Validator %s: Valid transaction received from %s: %s\n", Port, message["from"].(string), tx.Id())
-			if checkTransaction(v, tx) {
+			
+			if message["from"].(string) == "client" {
+				lastBlockHashFromMessage = utils.Byte32toStr(Chain.LastBlock().Hash)
+			} else {
+				if ShouldReceiveTxFromPeer == false{
+					return
+				}
+				lastBlockHashFromMessage = message["latestBlockHash"].(string)
+			}
+
+			if checkTransaction(v, tx, lastBlockHashFromMessage) {
 				MemPoolValidator.AddTransaction(tx)
 				BroadcastTransaction(tx)
 				fmt.Printf("Validator %s: Adding new transaction to mempool: %s\n", Port, tx.Id())
 				fmt.Printf("Validator %s: Mempool size: %d\n", Port, MemPoolValidator.Size())
 
 				log.Println("Push to chan_1")
-				Chan_1 <- Msg{MemPoolValidator, Chain.LastBlock().Height+1}
+				Chan_1 <- Chan1Message {
+					Msg : Msg{MemPoolValidator, Chain.LastBlock().Height+1},
+					Time: false,
+				}
+				
 			} else {
 				fmt.Printf("Validator %s: Already have that transaction\n", Port)
 			}
@@ -78,7 +93,7 @@ func HandleMessage(v *Validator, msg []byte) {
 		}
 	case "blockHash":
 		ReceivedBlockHash[message["from"].(string)] = message["blockHash"].(string)
-		log.Println("handler.go ** before checkCondition")
+		fmt.Println("handler.go ** before checkCondition")
 		checkCondition()
 	default:
 		fmt.Println("Default")
@@ -98,8 +113,7 @@ func checkCondition(){
 	winner := ""
 	finalHash := ""
 
-	blockHashSlice := DraftBlock.Hash[:]
-	blockHashStr := hex.EncodeToString(blockHashSlice)
+	blockHashStr := utils.Byte32toStr(DraftBlock.Hash)
 
 	ReceivedBlockHash[Port] = blockHashStr
 	for peer, _ := range ReceivedBlockHash {
@@ -120,6 +134,7 @@ func checkCondition(){
 		if blockHashStr == finalHash {
 			preBlockHash := Chain.LastBlock().Hash
 			Chain.CreateBlock(DraftBlock.Height, preBlockHash, DraftBlock.Transactions)
+			ShouldReceiveTxFromPeer = true
 			Chain.Print()
 		} else {
 			// sync from winner
@@ -168,7 +183,11 @@ func AddPeer(peers []interface{}) {
 	}
 }
 
-func checkTransaction(v *Validator, tx Transaction) bool {
+func checkTransaction(v *Validator, tx Transaction, lastBlockHash string) bool {
+	if lastBlockHash != utils.Byte32toStr(Chain.LastBlock().Hash) {
+		return false
+	}
+
 	for i := range MemPoolValidator.GetTransactions() {
 		if MemPoolValidator.GetTransactions()[i].Id() == tx.Id() {
 			return false
