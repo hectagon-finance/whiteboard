@@ -3,8 +3,7 @@
   "Instructions": [
     {
       "Id": "1",
-      "C": "Create",
-      "Data": "eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="
+      "Data":           
     },
     {
       "Id": "2",

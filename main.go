@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"os"
+	"time"
 
 	. "github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/validator"
@@ -21,32 +21,34 @@ func main() {
 
 		go BroadcastBlockHash()
 
+		go ClientReadHandler()
+
+		go Logic()
+
 		// Wait for a few seconds to let the validators establish connections
-		for {
-			
-		}
+		time.Sleep(1000 * time.Second)
 	}
 }
+
 // ./main 8080 genesis ; ./main 9000 8080
 func NewValidator(port string, is_genenis string) Validator {
 	Port = port
-	log.Println("Port: ", Port)
 	Peers = append(Peers, port)
 
 	if is_genenis == "genesis" {
-		// genesis validator	
+		// genesis validator
 		Chain = NewBlockchain()
-	}else {
+	} else {
 		// sync with other is_genenis (port)
 		Peers = append(Peers, is_genenis)
 	}
-	
+
 	publicKey := "public-key"
 	privateKey := "private-key"
 	MemPoolValidator = NewMemPool()
 
 	return Validator{
-		PublicKey:   publicKey,
-		PrivateKey:  privateKey,
+		PublicKey:  publicKey,
+		PrivateKey: privateKey,
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/hectagon-finance/whiteboard/types"
 	. "github.com/hectagon-finance/whiteboard/types"
 	"github.com/hectagon-finance/whiteboard/utils/crypto"
+	"github.com/hectagon-finance/whiteboard/validator"
 )
 
 // var addr = flag.String("addr", "localhost:8080", "http service address")
@@ -51,9 +52,9 @@ func main() {
 	}
 
 	if os.Args[1] == "send" && os.Args[3] == "-k" {
-		if checkHaveWallet("public_key.txt", false) {
+		if checkHaveWallet("./cmd/client/public_key.txt", false) {
 			// Open file public_key.txt
-			file, err := os.Open("public_key.txt")
+			file, err := os.Open("./cmd/client/public_key.txt")
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -69,7 +70,28 @@ func main() {
 			publicKeyForConvert := crypto.PublicKeyFromString(publicKeyStr).Key
 			privateKey := crypto.PrivateKeyFromString(os.Args[4], publicKeyForConvert)
 
-			msg := []byte(os.Args[2])
+			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
+			// ins := validator.Instruction{
+			// 				C:    "Create",
+			// 				Data: []byte(`{"DESC":"Description1","TITLE":"Title1"}`),
+			// }
+
+			ins := validator.Instruction{
+							C:    "Start",
+							Data: []byte(`{"Id":"iQcSMdZC","EstDayToFinish":1}`),
+			}
+
+			// encode to json
+			insByte, err := json.Marshal(ins)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			msg := insByte
+
+			
+
 
 			sig, err := privateKey.Sign(msg)
 
