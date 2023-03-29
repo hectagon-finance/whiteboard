@@ -168,7 +168,7 @@ func logic(mem []byte, block Block) []byte {
 			if err == nil {
 				t := findTask(tasks, stopInstrucion.Id)
 				if t != nil && t.Status != Finished {
-					t.Status = Stopped
+					t.Status = Stopped.
 					emitEvent(blockHash, ins.Id, fmt.Sprintf("Stop Task #%s(%s), because of %s", t.Id, t.Title, stopInstrucion.Reason))
 					newMem, _ = json.Marshal(tasks)
 				}
