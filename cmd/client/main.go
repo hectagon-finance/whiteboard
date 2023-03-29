@@ -51,9 +51,9 @@ func main() {
 	}
 
 	if os.Args[1] == "send" && os.Args[3] == "-k" {
-		if checkHaveWallet("./cmd/client/public_key.txt", false) {
+		if checkHaveWallet("public_key.txt", false) {
 			// Open file public_key.txt
-			file, err := os.Open("./cmd/client/public_key.txt")
+			file, err := os.Open("public_key.txt")
 			if err != nil {
 				fmt.Println(err)
 				return
