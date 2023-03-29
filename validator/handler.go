@@ -14,7 +14,7 @@ import (
 func ClientHandler(v *Validator, is_genesis string) {
 	if is_genesis != "genesis" {
 		u := url.URL{Scheme: "ws", Host: "localhost:" + is_genesis, Path: "/ws"}
-		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil) 
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 		if err != nil {
 			log.Fatal("dial:", err)
 		}
@@ -36,5 +36,5 @@ func ClientHandler(v *Validator, is_genesis string) {
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/ws", v.Serve)
-	log.Fatal(http.ListenAndServe("localhost:" + Port, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+Port, nil))
 }

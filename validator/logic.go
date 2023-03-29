@@ -44,6 +44,7 @@ type Event struct {
 }
 
 type CreateInstruction struct {
+	Id    string
 	Title string
 	Desc  string
 }
@@ -72,21 +73,21 @@ var mem []byte
 func Logic() {
 	haha := []Task{}
 	mem, _ = json.Marshal(haha)
-	
+
 	for {
-		block := <- Chan_Block
-		fmt.Println("block:", block)
+		block := <-Chan_Block
+		// fmt.Println("block:", block)
 		mem = logic(block)
 		log.Println("mem:", string(mem))
 	}
 }
 
 type Instruction struct {
-	C   Command
+	C    Command
 	Data []byte
 }
 
-func logic(block types.Block) []byte{
+func logic(block types.Block) []byte {
 	var tasks []Task
 	newMem := mem
 	err := json.Unmarshal(mem, &tasks)
@@ -95,7 +96,7 @@ func logic(block types.Block) []byte{
 		return mem
 	}
 	transactions := block.GetTransactions()
-	
+
 	blockHash := utils.Byte32toStr(block.GetHash())
 
 	for _, trans := range transactions {
@@ -105,7 +106,7 @@ func logic(block types.Block) []byte{
 		if err != nil {
 			log.Println(err)
 		}
-		log.Println("ins:", ins)
+		// log.Println("ins:", ins)
 		switch ins.C {
 		case Create:
 			fmt.Println("\ncreate")
@@ -113,7 +114,7 @@ func logic(block types.Block) []byte{
 			err = json.Unmarshal(ins.Data, &createInstruction)
 			if err == nil {
 				tasks = append(tasks, Task{
-					Id:     utils.RandString(8),
+					Id:     createInstruction.Id,
 					Title:  createInstruction.Title,
 					Desc:   createInstruction.Desc,
 					Status: JustCreated,

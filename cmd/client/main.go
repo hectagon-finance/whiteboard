@@ -51,7 +51,7 @@ func main() {
 		}
 	}
 
-	if os.Args[1] == "send" && os.Args[3] == "-k" {
+	if os.Args[1] == "send" && os.Args[2] == "-k" {
 		if checkHaveWallet("./cmd/client/public_key.txt", false) {
 			// Open file public_key.txt
 			file, err := os.Open("./cmd/client/public_key.txt")
@@ -68,18 +68,31 @@ func main() {
 
 			publicKey := crypto.PublicKeyFromString(publicKeyStr)
 			publicKeyForConvert := crypto.PublicKeyFromString(publicKeyStr).Key
-			privateKey := crypto.PrivateKeyFromString(os.Args[4], publicKeyForConvert)
+			privateKey := crypto.PrivateKeyFromString(os.Args[3], publicKeyForConvert)
 
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
 			// ins := validator.Instruction{
-			// 				C:    "Create",
-			// 				Data: []byte(`{"DESC":"Description1","TITLE":"Title1"}`),
+			// 	C:    "Create",
+			// 	Data: []byte(`{"Id":"3","DESC":"Description1","TITLE":"Title1"}`),
+			// }
+
+			// ins := validator.Instruction{
+			// 	C:    "Finish",
+			// 	Data: []byte(`{"Id":"1","CongratMessage":"Congratulation"}`),
 			// }
 
 			ins := validator.Instruction{
-							C:    "Start",
-							Data: []byte(`{"Id":"iQcSMdZC","EstDayToFinish":1}`),
+				C:    "Start",
+				Data: []byte(`{"Id":"3","EstDayToFinish":2}`),
 			}
+
+			// ins := validator.Instruction{
+			// 	C:    "Stop",
+			// 	Data: []byte(`{"Id":"2","Reason":"Reason3"}`),
+			// }
+
+			log.Println(ins.C)
+			log.Println(string(ins.Data))
 
 			// encode to json
 			insByte, err := json.Marshal(ins)
@@ -89,9 +102,6 @@ func main() {
 			}
 
 			msg := insByte
-
-			
-
 
 			sig, err := privateKey.Sign(msg)
 
