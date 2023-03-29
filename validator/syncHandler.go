@@ -2,16 +2,17 @@ package validator
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 
 	"github.com/gorilla/websocket"
-	. "github.com/hectagon-finance/whiteboard/types"
+	"github.com/hectagon-finance/whiteboard/types"
 )
 
 func SyncBlockDraftRequestHandler(message map[string]interface{}){
 	height := message["height"].(float64)
-	result := Blockchain{}
+	result := types.Blockchain{}
 	
 	if DraftBlock.Height == int(height) {
 		result.Chain = append(result.Chain, DraftBlock)
@@ -45,7 +46,7 @@ func SyncBlockDraftRequestHandler(message map[string]interface{}){
 
 func SyncBlockDraftResponseHandler(message map[string]interface{}){
 	chainbyte := message["result"].(string)
-	blockchain, err := DecodeBlockchain([]byte(chainbyte))
+	blockchain, err := types.DecodeBlockchain([]byte(chainbyte))
 
 	if err != nil {
 		log.Fatal("decode:", err)
@@ -111,7 +112,7 @@ func SyncAllResponseHandler(message map[string]interface{}){
 	// Peers = peers
 
 	// update memPool
-	memPool, err := DecodeMemPool([]byte(memPoolStr))
+	memPool, err := types.DecodeMemPool([]byte(memPoolStr))
 	if err != nil {
 		panic(err)
 	}
@@ -119,10 +120,28 @@ func SyncAllResponseHandler(message map[string]interface{}){
 	MemPoolValidator.Transactions = memPool.Transactions
 
 	// update chain
-	chain, err := DecodeBlockchain([]byte(chainStr))
+	chain, err := types.DecodeBlockchain([]byte(chainStr))
 	if err != nil {
 		panic(err)
 	}
 	Chain = chain
 	Chain.Print()
+}
+
+func AddPeer(peers []interface{}) {
+	for _, peer := range peers {
+		alreadyhave := false
+		for _, p := range Peers {
+			if p == peer.(string) {
+				alreadyhave = true
+				break
+			}
+		}
+
+		if !alreadyhave {
+			fmt.Println("Validator", Port, ": Adding new peer", peer.(string))
+			Peers = append(Peers, peer.(string))
+		}
+
+	}
 }
