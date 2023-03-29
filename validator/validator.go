@@ -33,7 +33,7 @@ var ShouldReceiveTxFromPeer = true
 
 // type Chan1Message struct {
 // 	Time  bool
-// 	Msg   Msg	
+// 	Msg   Msg
 // }
 
 type Msg struct {
@@ -42,8 +42,8 @@ type Msg struct {
 }
 
 type Validator struct {
-	PublicKey    string
-	PrivateKey   string
+	PublicKey  string
+	PrivateKey string
 }
 
 func (v *Validator) GetPublicKey() string {
@@ -71,7 +71,7 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
-	} 
+	}
 	defer c.Close()
 	for {
 		_, message, err := c.ReadMessage()
@@ -82,7 +82,7 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 		log.Printf("recv: %s", message)
 
 		HandleMessage(v, message)
-		k := <- Chan_2
+		k := <-Chan_2
 		MemPoolValidator.Transactions = MemPoolValidator.Transactions[k:]
 	}
 }
@@ -109,7 +109,7 @@ func HandleMessage(v *Validator, msg []byte) {
 	}
 
 	switch message["type"].(string) {
-	
+
 	case "sync all request":
 		SyncAllRequestHandler(message)
 	case "sync all response":
@@ -129,7 +129,7 @@ func HandleMessage(v *Validator, msg []byte) {
 	}
 }
 
-func produceBlock(){
+func produceBlock() {
 	log.Println("Check condition")
 	log.Println("DraftBlock.Hash", DraftBlock.Hash)
 	if DraftBlock.Hash == [32]byte{} {
@@ -146,23 +146,24 @@ func produceBlock(){
 
 	ReceivedBlockHash[Port] = blockHashStr
 	for peer := range ReceivedBlockHash {
-		BlockHashCounter[ReceivedBlockHash[peer]] ++
+		BlockHashCounter[ReceivedBlockHash[peer]]++
 		if BlockHashCounter[ReceivedBlockHash[peer]] > max {
 			max = BlockHashCounter[ReceivedBlockHash[peer]]
 			winner = peer
 			finalHash = ReceivedBlockHash[peer]
 		}
-		totalReceived ++
+		totalReceived++
 	}
 	log.Println("Total received", totalReceived)
 	log.Println("Max", max)
-	log.Println("Percent", float64(len(Peers)) * 0.7)
+	log.Println("Percent", float64(len(Peers))*0.7)
 	log.Println("Final hash", finalHash, "blockHashStr", blockHashStr)
-	if totalReceived >= float64(len(Peers)) * 0.7 {
+	if totalReceived >= float64(len(Peers))*0.7 {
 		// add to chain
 		if blockHashStr == finalHash {
 			preBlockHash := Chain.LastBlock().Hash
 			Chain.CreateBlock(DraftBlock.Height, preBlockHash, DraftBlock.Transactions)
+			Chan_Block <- DraftBlock
 			ShouldReceiveTxFromPeer = true
 			Chain.Print()
 		} else {
@@ -170,15 +171,15 @@ func produceBlock(){
 			log.Println("Sync Draft Block from winner", winner)
 
 			u := url.URL{Scheme: "ws", Host: "localhost:" + winner, Path: "/ws"}
-			conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil) 
+			conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 			defer conn.Close()
 			if err != nil {
 				log.Fatal("dial:", err)
 			}
 			msg := map[string]interface{}{
-				"type": "sync draft block request",
-				"from": Port,
-				"to"  : winner,
+				"type":   "sync draft block request",
+				"from":   Port,
+				"to":     winner,
 				"height": DraftBlock.Height,
 			}
 			message, err := json.Marshal(msg)
@@ -188,7 +189,7 @@ func produceBlock(){
 			conn.WriteMessage(websocket.TextMessage, message)
 		}
 
-		// reset 
+		// reset
 		ReceivedBlockHash = make(map[string]string)
 		DraftBlock = types.Block{}
 	}
