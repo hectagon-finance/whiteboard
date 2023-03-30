@@ -35,7 +35,7 @@ func (bc *Blockchain) LastBlock() Block {
 
 func (bc *Blockchain) Print() {
 	for i, block := range bc.Chain {
-		fmt.Printf("%s Chain %d %s\n", strings.Repeat("=", 25), i,
+		fmt.Printf("%s Block %d %s\n", strings.Repeat("=", 25), i,
 			strings.Repeat("=", 25))
 		block.Print()
 	}
@@ -51,7 +51,7 @@ func (bc *Blockchain) Encode() ([]byte, error) {
 		}
 		blockchainEncode.Chain = append(blockchainEncode.Chain, blockEncode)
 	}
-	
+
 	blockchainByte, err := json.Marshal(blockchainEncode)
 	if err != nil {
 		return nil, err

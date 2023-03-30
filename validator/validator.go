@@ -79,7 +79,7 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 			log.Println("read:", err)
 			break
 		}
-		log.Printf("recv: %s", message)
+		// log.Printf("recv: %s", message)
 
 		HandleMessage(v, message)
 		k := <-Chan_2

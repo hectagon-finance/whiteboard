@@ -73,17 +73,22 @@ func main() {
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
 			// ins := validator.Instruction{
 			// 	C:    "Create",
-			// 	Data: []byte(`{"Id":"3","DESC":"Description1","TITLE":"Title1"}`),
+			// 	Data: []byte(`{"Id":"6","Desc":"Description1","Title":"Title1"}`),
 			// }
 
 			// ins := validator.Instruction{
 			// 	C:    "Finish",
-			// 	Data: []byte(`{"Id":"1","CongratMessage":"Congratulation"}`),
+			// 	Data: []byte(`{"Id":"2","CongratMessage":"Congratulation"}`),
+			// }
+
+			// ins := validator.Instruction{
+			// 	C:    "Start",
+			// 	Data: []byte(`{"Id":"3","EstDayToFinish":2}`),
 			// }
 
 			ins := validator.Instruction{
-				C:    "Start",
-				Data: []byte(`{"Id":"3","EstDayToFinish":2}`),
+				C:    "Paused",
+				Data: []byte(`{"Id":"6","EstWaitDay":2}`),
 			}
 
 			// ins := validator.Instruction{
@@ -127,7 +132,7 @@ func main() {
 			haha := *publicKey
 			hehe := *sig
 			tx := types.NewTransaction(haha, hehe, msg)
-			sendTransaction("9000", tx)
+			sendTransaction("9001", tx)
 
 		}
 	}
