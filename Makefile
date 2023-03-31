@@ -14,10 +14,10 @@ run4:
 	go run main.go 9002 9001
 
 client1:
-	go run ./cmd/client/main.go send -k afe79f8f118feb344332622997fff34a9ef9d6706e5766d2624ad8d65cf88126
+	go run ./cmd/client/main.go send -k 8df4135ecefc9a4d054e2c596cd3f56432e683431b27216fea917b01c8ef1fee
 
 client2:
-	go run ./cmd/client/main.go send -k hahaah
+	go run ./cmd/client/main.go send -k ccdfc76922c6c4760847b5f4d5dc3bf1bfa1664e1106aa55c2ac013c68049401
 
 test:
 	go test -v ./...

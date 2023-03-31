@@ -9,13 +9,17 @@ import (
 	"github.com/hectagon-finance/whiteboard/utils/crypto"
 )
 
-func HandleTypeTransaction(v *Validator, message map[string]interface{}){
+func HandleTypeTransaction(v *Validator, message map[string]interface{}) {
+	fmt.Println(message)
+	fmt.Println("hehe")
 	var lastBlockHashFromMessage string
 	publicKeyStr := message["publicKey"].(string)
 	signatureStr := message["signature"].(string)
 
 	publicKey := crypto.PublicKeyFromString(publicKeyStr)
 	signature := crypto.SignatureFromString(signatureStr)
+	fmt.Println("publicKey", publicKey)
+	fmt.Println("signature", signature)
 
 	data := message["data"].(string)
 
@@ -28,11 +32,11 @@ func HandleTypeTransaction(v *Validator, message map[string]interface{}){
 
 	if tx.Signature.Verify(*publicKey, tx.Data) {
 		fmt.Printf("Validator %s: Valid transaction received from %s: %s\n", Port, message["from"].(string), tx.Id())
-		
+
 		if message["from"].(string) == "client" {
 			lastBlockHashFromMessage = utils.Byte32toStr(Chain.LastBlock().Hash)
 		} else {
-			if !ShouldReceiveTxFromPeer{
+			if !ShouldReceiveTxFromPeer {
 				return
 			}
 			lastBlockHashFromMessage = message["latestBlockHash"].(string)
@@ -50,8 +54,8 @@ func HandleTypeTransaction(v *Validator, message map[string]interface{}){
 			// 	Time: false,
 			// }
 
-			Chan_1 <- Msg{MemPoolValidator, Chain.LastBlock().Height+1}
-			
+			Chan_1 <- Msg{MemPoolValidator, Chain.LastBlock().Height + 1}
+
 		} else {
 			fmt.Printf("Validator %s: Already have that transaction\n", Port)
 		}
@@ -80,21 +84,18 @@ func BroadcastTransaction(tx types.Transaction) {
 
 	signature := tx.Signature
 	signatureStr := signature.SignatureStr()
- 
+
 	blockHashStr := utils.Byte32toStr(Chain.LastBlock().Hash)
 
-
-
 	message := map[string]interface{}{
-		"type":          "transaction",
-		"from":          Port,
-		"transactionId": tx.Id(),
-		"publicKey":     publicKeyStr,
-		"signature":     signatureStr,
-		"data":          string(tx.Data),
-		"latestBlockHash":   blockHashStr,
+		"type":            "transaction",
+		"from":            Port,
+		"transactionId":   tx.Id(),
+		"publicKey":       publicKeyStr,
+		"signature":       signatureStr,
+		"data":            string(tx.Data),
+		"latestBlockHash": blockHashStr,
 	}
 
 	ConnectAndSendMessage(message)
 }
-

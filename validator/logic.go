@@ -19,6 +19,7 @@ const (
 	Stop   Command = "Stop"
 	Pause  Command = "Pause"
 	Finish Command = "Finish"
+	Assign Command = "Assign"
 )
 
 const (
@@ -30,10 +31,12 @@ const (
 )
 
 type Task struct {
-	Id     string
-	Title  string
-	Desc   string
-	Status Status
+	Id      string
+	Title   string
+	Desc    string
+	Status  Status
+	Owner   string
+	Handler []string
 }
 
 type Event struct {
@@ -47,22 +50,32 @@ type CreateInstruction struct {
 	Id    string
 	Title string
 	Desc  string
+	From  string
 }
 type StartInstruction struct {
 	Id             string
 	EstDayToFinish int
+	From           string
 }
 type StopInstruction struct {
 	Id     string
 	Reason string
+	From   string
 }
 type PauseInstruction struct {
 	Id         string
 	EstWaitDay int
+	From       string
 }
 type FinishInstruction struct {
 	Id             string
 	CongratMessage string
+	From           string
+}
+type AssignInstruction struct {
+	Id       string
+	AssignTo string
+	From     string
 }
 
 var events = make([]Event, 0)
@@ -118,10 +131,32 @@ func logic(block types.Block) []byte {
 					Title:  createInstruction.Title,
 					Desc:   createInstruction.Desc,
 					Status: JustCreated,
+					Owner:  createInstruction.From,
 				})
 				emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Create Task{%s, %s}", createInstruction.Title, createInstruction.Desc))
 				newMem, _ = json.Marshal(tasks)
 			}
+		case Assign:
+			fmt.Println("\nassign")
+			var assignInstruction *AssignInstruction
+			err = json.Unmarshal(ins.Data, &assignInstruction)
+			if err == nil {
+				fmt.Println("Running")
+
+				t := findTask(tasks, assignInstruction.Id)
+				fmt.Println(t)
+				fmt.Println("owner", t.Owner)
+				fmt.Println("from", assignInstruction.From)
+				fmt.Println("Running2")
+
+				if t != nil && t.Owner == assignInstruction.From {
+					fmt.Println("Running3")
+					t.Handler = append(t.Handler, assignInstruction.AssignTo)
+					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Assign Task %s For{%s}", assignInstruction.Id, assignInstruction.AssignTo))
+					newMem, _ = json.Marshal(tasks)
+				}
+			}
+
 		case Start:
 			fmt.Println("\nstart")
 			var startInstrucion *StartInstruction
@@ -130,9 +165,11 @@ func logic(block types.Block) []byte {
 				t := findTask(tasks, startInstrucion.Id)
 				fmt.Println(t)
 				if t != nil && (t.Status == JustCreated || t.Status == Paused) {
-					t.Status = Doing
-					newMem, _ = json.Marshal(tasks)
-					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Start Task #%s(%s), est to finish in %d", t.Id, t.Title, startInstrucion.EstDayToFinish))
+					if checkHandler(startInstrucion.From, t.Handler) || startInstrucion.From == t.Owner {
+						t.Status = Doing
+						newMem, _ = json.Marshal(tasks)
+						emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Start Task #%s(%s), est to finish in %d", t.Id, t.Title, startInstrucion.EstDayToFinish))
+					}
 				}
 			}
 		case Stop:
@@ -178,6 +215,15 @@ func logic(block types.Block) []byte {
 	}
 	return newMem
 
+}
+
+func checkHandler(from string, handlers []string) bool {
+	for _, h := range handlers {
+		if h == from {
+			return true
+		}
+	}
+	return false
 }
 
 func emitEvent(blockHash string, instructionId string, message string) {
