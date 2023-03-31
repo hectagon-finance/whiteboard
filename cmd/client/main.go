@@ -27,7 +27,7 @@ func main() {
 		if checkHaveWallet("./cmd/client/public_key.txt", true) == false {
 			privateKey := crypto.GeneratePrivateKey()
 			publicKey := privateKey.PublicKey()
-			address := publicKey.Address()
+			address := publicKey.Address().String()
 			privateKeyStr := privateKey.PrivateKeyStr()
 			publicKeyStr := (publicKey.PublicKeyStr())
 			fmt.Println("Please save your private key:")
@@ -69,12 +69,13 @@ func main() {
 			publicKey := crypto.PublicKeyFromString(publicKeyStr)
 			publicKeyForConvert := crypto.PublicKeyFromString(publicKeyStr).Key
 			privateKey := crypto.PrivateKeyFromString(os.Args[3], publicKeyForConvert)
+			address := publicKey.Address().String()
 
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
-			// ins := validator.Instruction{
-			// 	C:    "Create",
-			// 	Data: []byte(`{"Id":"6","Desc":"Description1","Title":"Title1"}`),
-			// }
+			ins := validator.Instruction{
+				C:    "Create",
+				Data: []byte(`{"Id":"4","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
+			}
 
 			// ins := validator.Instruction{
 			// 	C:    "Finish",
@@ -83,13 +84,18 @@ func main() {
 
 			// ins := validator.Instruction{
 			// 	C:    "Start",
-			// 	Data: []byte(`{"Id":"3","EstDayToFinish":2}`),
+			// 	Data: []byte(`{"Id":"2","EstDayToFinish":2,"From":"` + address + `"}`),
 			// }
 
-			ins := validator.Instruction{
-				C:    "Paused",
-				Data: []byte(`{"Id":"6","EstWaitDay":2}`),
-			}
+			// ins := validator.Instruction{
+			// 	C:    "Paused",
+			// 	Data: []byte(`{"Id":"6","EstWaitDay":2}`),
+			// }
+
+			// ins := validator.Instruction{
+			// 	C:    "Assign",
+			// 	Data: []byte(`{"Id":"1","From":"` + address + `", "AssignTo":"207307a29c3249ac095856c800712be6bcce36db"}`),
+			// }
 
 			// ins := validator.Instruction{
 			// 	C:    "Stop",
@@ -108,20 +114,11 @@ func main() {
 
 			msg := insByte
 
+			fmt.Println("msg", msg)
+
 			sig, err := privateKey.Sign(msg)
 
-			// input := Input{
-			// 	PublicKey: publicKey,
-			// 	SigNature: sig,
-			// 	Data:      msg,
-			// }
-
-			// var buf bytes.Buffer
-			// enc := gob.NewEncoder(&buf)
-
-			// if err := enc.Encode(input); err != nil {
-			// 	return
-			// }
+			fmt.Println("sig", sig)
 
 			flag.Parse()
 			log.SetFlags(0)
@@ -132,7 +129,7 @@ func main() {
 			haha := *publicKey
 			hehe := *sig
 			tx := types.NewTransaction(haha, hehe, msg)
-			sendTransaction("9001", tx)
+			sendTransaction("9000", tx)
 
 		}
 	}
@@ -174,6 +171,8 @@ func sendTransaction(validatorId string, tx Transaction) {
 	signature := tx.Signature
 	signatureStr := signature.SignatureStr()
 
+	fmt.Println("tx", tx)
+
 	message := map[string]interface{}{
 		"type":          "transaction",
 		"from":          "client",
@@ -182,6 +181,8 @@ func sendTransaction(validatorId string, tx Transaction) {
 		"signature":     signatureStr,
 		"data":          string(tx.Data),
 	}
+
+	fmt.Println("message", message)
 
 	msg, err := json.Marshal(message)
 	if err != nil {
