@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import elliptic from "elliptic";
 import Select from "../common/Select";
 import Input from "../common/Input";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useLocation } from "react-router-dom";
+import generateRandomNumber from "../function/generateRandomNumber";
+
+const EC = elliptic.ec;
+const ec = new EC("p256");
 
 const Command = ["Create", "Start", "Stop", "Pause", "Finish", "Assign"];
 
@@ -12,7 +18,6 @@ const TodoList = () => {
     description: yup.string().required("Field is invalid"),
     title: yup.string().required("Field is invalid"),
   });
-
   const {
     register,
     handleSubmit,
@@ -21,10 +26,35 @@ const TodoList = () => {
     mode: "onChange",
     resolver: yupResolver(schema),
   });
+  const location = useLocation();
+  const [privateKey, setPrivateKey] = useState(null);
+  const [publicKey, setPublicKey] = useState(null);
+  const [walletAddress, setWalletAddress] = useState(null);
+
+  useEffect(() => {
+    if (location.state) {
+      setPrivateKey(location.state.privateKey);
+      setPublicKey(location.state.publicKey);
+      setWalletAddress(location.state.walletAddress);
+    }
+  }, [location]);
 
   const [selectedCommand, setSelectedCommand] = useState("Create");
 
+  console.log("privateKey: " + privateKey);
+  console.log("publicKey: " + publicKey);
+  console.log("walletAddress: " + walletAddress);
+
   const handleSubmitForm = (valueFields) => {
+    let message = JSON.Stringify({
+      type: "transaction",
+      from: "client",
+      transactionId: generateRandomNumber(),
+      publicKey: publicKey,
+      // signature: signatureStr,
+      // data: data,
+    });
+
     console.log(valueFields.description);
     console.log(valueFields.title);
   };
