@@ -7,6 +7,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useLocation } from "react-router-dom";
 import generateRandomNumber from "../function/generateRandomNumber";
+import * as WebSocket from "websocket";
+import { Buffer } from "buffer";
 
 const EC = elliptic.ec;
 const ec = new EC("p256");
@@ -15,6 +17,7 @@ const Command = ["Create", "Start", "Stop", "Pause", "Finish", "Assign"];
 
 const TodoList = () => {
   const schema = yup.object().shape({
+    id: yup.string().required("Field is invalid"),
     description: yup.string().required("Field is invalid"),
     title: yup.string().required("Field is invalid"),
   });
@@ -27,36 +30,82 @@ const TodoList = () => {
     resolver: yupResolver(schema),
   });
   const location = useLocation();
-  const [privateKey, setPrivateKey] = useState(null);
   const [publicKey, setPublicKey] = useState(null);
   const [walletAddress, setWalletAddress] = useState(null);
+  const [selectedCommand, setSelectedCommand] = useState("Create");
+  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    const ws = new WebSocket.w3cwebsocket("ws://localhost:9000/ws");
+    setSocket(ws);
     if (location.state) {
-      setPrivateKey(location.state.privateKey);
       setPublicKey(location.state.publicKey);
       setWalletAddress(location.state.walletAddress);
     }
+
+    ws.onopen = () => {
+      setIsConnected(true);
+      console.log("WebSocket connected");
+    };
+
+    ws.onclose = () => {
+      setIsConnected(false);
+      console.log("WebSocket disconnected");
+    };
+
+    return () => {
+      ws.close();
+    };
   }, [location]);
 
-  const [selectedCommand, setSelectedCommand] = useState("Create");
-
-  console.log("privateKey: " + privateKey);
+  console.log("privateKey: " + location.state.privateKey);
   console.log("publicKey: " + publicKey);
   console.log("walletAddress: " + walletAddress);
 
   const handleSubmitForm = (valueFields) => {
-    let message = JSON.Stringify({
+    const keyPair = ec.keyFromPrivate(location.state.privateKey, "hex");
+
+    let instructionData = {
+      Id: valueFields.id,
+      description: valueFields.description,
+      title: valueFields.title,
+      From: walletAddress.toString(),
+    };
+    const instructionDataJsonStr = JSON.stringify(instructionData);
+    const instructionDataBase64Str = Buffer.from(
+      instructionDataJsonStr
+    ).toString("base64");
+
+    const data = JSON.stringify({
+      C: selectedCommand,
+      Data: instructionDataBase64Str,
+    });
+
+    const encoder = new TextEncoder();
+    const byteArray = encoder.encode(data);
+    const signature = keyPair.sign(byteArray);
+
+    const signatureStr =
+      signature.s.toString(16).padStart(64, "0") +
+      signature.r.toString(16).padStart(64, "0");
+
+    let message = JSON.stringify({
       type: "transaction",
       from: "client",
       transactionId: generateRandomNumber(),
       publicKey: publicKey,
-      // signature: signatureStr,
-      // data: data,
+      signature: signatureStr,
+      data: data,
     });
 
-    console.log(valueFields.description);
-    console.log(valueFields.title);
+    console.log("message: " + message);
+
+    if (isConnected && socket) {
+      socket.send(message);
+    } else {
+      console.error("WebSocket not connected");
+    }
   };
 
   const handleCommandChange = (newCommand) => {
@@ -75,6 +124,12 @@ const TodoList = () => {
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           {selectedCommand === "Create" && (
             <div>
+              <Input
+                label={"Id"}
+                id="id"
+                register={register("id")}
+                message={errors?.id?.message}
+              />
               <Input
                 label={"Description"}
                 id="description"

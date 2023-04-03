@@ -142,13 +142,11 @@ func logic(block types.Block) []byte {
 			err = json.Unmarshal(ins.Data, &assignInstruction)
 			if err == nil {
 				fmt.Println("Running")
-
 				t := findTask(tasks, assignInstruction.Id)
 				fmt.Println(t)
 				fmt.Println("owner", t.Owner)
 				fmt.Println("from", assignInstruction.From)
 				fmt.Println("Running2")
-
 				if t != nil && t.Owner == assignInstruction.From {
 					fmt.Println("Running3")
 					t.Handler = append(t.Handler, assignInstruction.AssignTo)
@@ -179,7 +177,7 @@ func logic(block types.Block) []byte {
 			if err == nil {
 				t := findTask(tasks, stopInstrucion.Id)
 				fmt.Println(t)
-				if t != nil && t.Status != Finished {
+				if t != nil && t.Status != Finished && stopInstrucion.From == t.Owner {
 					t.Status = Stopped
 					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Stop Task #%s(%s), because of %s", t.Id, t.Title, stopInstrucion.Reason))
 					newMem, _ = json.Marshal(tasks)
@@ -193,9 +191,11 @@ func logic(block types.Block) []byte {
 				t := findTask(tasks, pauseInstrucion.Id)
 				fmt.Println(t)
 				if t != nil && (t.Status == JustCreated || t.Status == Doing) {
-					t.Status = Paused
-					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Pause Task #%s(%s), est to wait %d day(s)", t.Id, t.Title, pauseInstrucion.EstWaitDay))
-					newMem, _ = json.Marshal(tasks)
+					if checkHandler(pauseInstrucion.From, t.Handler) || pauseInstrucion.From == t.Owner {
+						t.Status = Paused
+						emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Pause Task #%s(%s), est to wait %d day(s)", t.Id, t.Title, pauseInstrucion.EstWaitDay))
+						newMem, _ = json.Marshal(tasks)
+					}
 				}
 			}
 		case Finish:
@@ -205,7 +205,7 @@ func logic(block types.Block) []byte {
 			if err == nil {
 				t := findTask(tasks, finishInstrucion.Id)
 				fmt.Println(t)
-				if t != nil && t.Status != Stopped {
+				if t != nil && t.Status != Stopped && finishInstrucion.From == t.Owner {
 					t.Status = Finished
 					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Finish Task #%s(%s). %s", t.Id, t.Title, finishInstrucion.CongratMessage))
 					newMem, _ = json.Marshal(tasks)
