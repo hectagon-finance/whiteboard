@@ -60,6 +60,7 @@ const TodoList = () => {
   const [selectedCommand, setSelectedCommand] = useState("Create");
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [base64Data, setBase64Data] = useState(null);
 
   useEffect(() => {
     switch (schema) {
@@ -99,6 +100,8 @@ const TodoList = () => {
       console.log("WebSocket connected");
     };
 
+    fetchData();
+
     ws.onclose = () => {
       setIsConnected(false);
       console.log("WebSocket disconnected");
@@ -109,11 +112,21 @@ const TodoList = () => {
     };
   }, [location, selectedCommand]);
 
-  // console.log("privateKey: " + location.state.privateKey);
-  // console.log("publicKey: " + publicKey);
-  // console.log("walletAddress: " + walletAddress);
+  const fetchData = async () => {
+    try {
+      const response = await fetch("http://localhost:18080/get");
+      const data = await response.text();
+      console.log("data", data);
+      setBase64Data(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
   const handleSubmitForm = (valueFields) => {
+    const ws = new WebSocket.w3cwebsocket("ws://localhost:9000/ws");
+    setSocket(ws);
+
     console.log("===============send");
     const keyPair = ec.keyFromPrivate(location.state.privateKey, "hex");
 
@@ -133,7 +146,7 @@ const TodoList = () => {
         console.log("=============Start");
         instructionData = {
           Id: valueFields.idStart,
-          EstDayToFinish: valueFields.estdaytofinish,
+          EstDayToFinish: parseInt(valueFields.estdaytofinish),
           From: walletAddress.toString(),
         };
         console.log(instructionData);
@@ -149,7 +162,7 @@ const TodoList = () => {
       case "Pause":
         instructionData = {
           Id: valueFields.idPause,
-          EstWaitDay: valueFields.estwaitday,
+          EstWaitDay: parseInt(valueFields.estwaitday),
           From: walletAddress.toString(),
         };
         console.log(instructionData);
@@ -168,7 +181,7 @@ const TodoList = () => {
           AssignTo: valueFields.assignTo,
           From: walletAddress.toString(),
         };
-        console.log(instructionData);
+        console.log("instructionData", instructionData);
         break;
       default:
         break;
@@ -208,6 +221,11 @@ const TodoList = () => {
     } else {
       console.error("WebSocket not connected");
     }
+
+    // Delay fetchData() by 2 seconds
+    setTimeout(() => {
+      fetchData();
+    }, 2000);
   };
 
   const handleCommandChange = (newCommand) => {
@@ -320,17 +338,12 @@ const TodoList = () => {
               />
             </div>
           )}
-          {/* <Input
-            label={"Repo name"}
-            id="repo"
-            register={register("repoName")}
-            message={errors?.repoName?.message}
-          /> */}
           <button className="block w-full bg-blue-500 text-white font-bold p-4 rounded-lg">
             Submit
           </button>
         </form>
       </div>
+      <div>{base64Data && <p>{base64Data}</p>}</div>
     </div>
   );
 };
