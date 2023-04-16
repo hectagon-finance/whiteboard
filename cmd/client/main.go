@@ -72,15 +72,15 @@ func main() {
 			address := publicKey.Address().String()
 
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
-			ins := validator.Instruction{
-				C:    "Create",
-				Data: []byte(`{"Id":"4","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
-			}
-
 			// ins := validator.Instruction{
-			// 	C:    "Finish",
-			// 	Data: []byte(`{"Id":"2","CongratMessage":"Congratulation"}`),
+			// 	C:    "Create",
+			// 	Data: []byte(`{"Id":"1","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
 			// }
+
+			ins := validator.Instruction{
+				C:    "Finish",
+				Data: []byte(`{"Id":"3","CongratMessage":"Congratulation,"From":"` + address + `"}`),
+			}
 
 			// ins := validator.Instruction{
 			// 	C:    "Start",
@@ -94,7 +94,7 @@ func main() {
 
 			// ins := validator.Instruction{
 			// 	C:    "Assign",
-			// 	Data: []byte(`{"Id":"1","From":"` + address + `", "AssignTo":"207307a29c3249ac095856c800712be6bcce36db"}`),
+			// 	Data: []byte(`{"Id":"2","From":"` + address + `", "AssignTo":"207307a29c3249ac095856c800712be6bcce36db"}`),
 			// }
 
 			// ins := validator.Instruction{
@@ -114,11 +114,7 @@ func main() {
 
 			msg := insByte
 
-			fmt.Println("msg", msg)
-
 			sig, err := privateKey.Sign(msg)
-
-			fmt.Println("sig", sig)
 
 			flag.Parse()
 			log.SetFlags(0)
@@ -126,9 +122,9 @@ func main() {
 			interrupt := make(chan os.Signal, 1)
 			signal.Notify(interrupt, os.Interrupt)
 
-			haha := *publicKey
-			hehe := *sig
-			tx := types.NewTransaction(haha, hehe, msg)
+			publicKeyToSend := *publicKey
+			signatureToSend := *sig
+			tx := types.NewTransaction(publicKeyToSend, signatureToSend, msg)
 			sendTransaction("9000", tx)
 
 		}
@@ -170,8 +166,6 @@ func sendTransaction(validatorId string, tx Transaction) {
 
 	signature := tx.Signature
 	signatureStr := signature.SignatureStr()
-
-	fmt.Println("tx", tx)
 
 	message := map[string]interface{}{
 		"type":          "transaction",

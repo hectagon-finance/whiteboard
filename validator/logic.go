@@ -218,8 +218,8 @@ func logic(block types.Block) []byte {
 }
 
 func checkHandler(from string, handlers []string) bool {
-	for _, h := range handlers {
-		if h == from {
+	for _, handler := range handlers {
+		if handler == from {
 			return true
 		}
 	}

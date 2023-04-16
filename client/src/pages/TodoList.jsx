@@ -16,11 +16,36 @@ const ec = new EC("p256");
 const Command = ["Create", "Start", "Stop", "Pause", "Finish", "Assign"];
 
 const TodoList = () => {
-  const schema = yup.object().shape({
-    id: yup.string().required("Field is invalid"),
+  const schemaCreate = yup.object().shape({
+    idCreate: yup.string().required("Field is invalid"),
     description: yup.string().required("Field is invalid"),
     title: yup.string().required("Field is invalid"),
   });
+
+  const schemaStart = yup.object().shape({
+    idStart: yup.string().required("Field is invalid"),
+    estdaytofinish: yup.string().required("Field is invalid"),
+  });
+
+  const schemaStop = yup.object().shape({
+    idStop: yup.string().required("Field is invalid"),
+    reason: yup.string().required("Field is invalid"),
+  });
+
+  const schemaPause = yup.object().shape({
+    idPause: yup.string().required("Field is invalid"),
+    estwaitday: yup.string().required("Field is invalid"),
+  });
+  const schemaFinish = yup.object().shape({
+    idFinish: yup.string().required("Field is invalid"),
+    congratmessage: yup.string().required("Field is invalid"),
+  });
+
+  const schemaAssign = yup.object().shape({
+    idAssign: yup.string().required("Field is invalid"),
+    assignTo: yup.string().required("Field is invalid"),
+  });
+  const [schema, setSchema] = useState(schemaCreate);
   const {
     register,
     handleSubmit,
@@ -35,6 +60,31 @@ const TodoList = () => {
   const [selectedCommand, setSelectedCommand] = useState("Create");
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    switch (schema) {
+      case "Create":
+        setSchema(schemaCreate);
+        break;
+      case "Start":
+        setSchema(schemaStart);
+        break;
+      case "Stop":
+        setSchema(schemaStop);
+        break;
+      case "Pause":
+        setSchema(schemaPause);
+        break;
+      case "Finish":
+        setSchema(schemaFinish);
+        break;
+      case "Assign":
+        setSchema(schemaAssign);
+        break;
+      default:
+        break;
+    }
+  }, [schema]);
 
   useEffect(() => {
     const ws = new WebSocket.w3cwebsocket("ws://localhost:9000/ws");
@@ -57,21 +107,73 @@ const TodoList = () => {
     return () => {
       ws.close();
     };
-  }, [location]);
+  }, [location, selectedCommand]);
 
-  console.log("privateKey: " + location.state.privateKey);
-  console.log("publicKey: " + publicKey);
-  console.log("walletAddress: " + walletAddress);
+  // console.log("privateKey: " + location.state.privateKey);
+  // console.log("publicKey: " + publicKey);
+  // console.log("walletAddress: " + walletAddress);
 
   const handleSubmitForm = (valueFields) => {
+    console.log("===============send");
     const keyPair = ec.keyFromPrivate(location.state.privateKey, "hex");
 
-    let instructionData = {
-      Id: valueFields.id,
-      description: valueFields.description,
-      title: valueFields.title,
-      From: walletAddress.toString(),
-    };
+    let instructionData;
+
+    switch (selectedCommand) {
+      case "Create":
+        instructionData = {
+          Id: valueFields.idCreate,
+          Desc: valueFields.description,
+          Title: valueFields.title,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      case "Start":
+        console.log("=============Start");
+        instructionData = {
+          Id: valueFields.idStart,
+          EstDayToFinish: valueFields.estdaytofinish,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      case "Stop":
+        instructionData = {
+          Id: valueFields.idStop,
+          Reason: valueFields.reason,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      case "Pause":
+        instructionData = {
+          Id: valueFields.idPause,
+          EstWaitDay: valueFields.estwaitday,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      case "Finish":
+        instructionData = {
+          Id: valueFields.idFinish,
+          CongratMessage: valueFields.congratmessage,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      case "Assign":
+        instructionData = {
+          Id: valueFields.idAssign,
+          AssignTo: valueFields.assignTo,
+          From: walletAddress.toString(),
+        };
+        console.log(instructionData);
+        break;
+      default:
+        break;
+    }
+
     const instructionDataJsonStr = JSON.stringify(instructionData);
     const instructionDataBase64Str = Buffer.from(
       instructionDataJsonStr
@@ -126,9 +228,8 @@ const TodoList = () => {
             <div>
               <Input
                 label={"Id"}
-                id="id"
-                register={register("id")}
-                message={errors?.id?.message}
+                register={register("idCreate")}
+                message={errors?.idCreate?.message}
               />
               <Input
                 label={"Description"}
@@ -141,6 +242,81 @@ const TodoList = () => {
                 id="title"
                 register={register("title")}
                 message={errors?.title?.message}
+              />
+            </div>
+          )}
+          {selectedCommand === "Start" && (
+            <div>
+              <Input
+                label={"Id"}
+                register={register("idStart")}
+                message={errors?.idStart?.message}
+              />
+              <Input
+                label={"Est Day To Finish"}
+                id="estdaytofinish"
+                register={register("estdaytofinish")}
+                message={errors?.estdaytofinish?.message}
+              />
+            </div>
+          )}
+          {selectedCommand === "Stop" && (
+            <div>
+              <Input
+                label={"Id"}
+                register={register("idStop")}
+                message={errors?.idStop?.message}
+              />
+              <Input
+                label={"Reason"}
+                id="reason"
+                register={register("reason")}
+                message={errors?.reason?.message}
+              />
+            </div>
+          )}
+          {selectedCommand === "Pause" && (
+            <div>
+              <Input
+                label={"Id"}
+                register={register("idPause")}
+                message={errors?.idPause?.message}
+              />
+              <Input
+                label={"Est Wait Day"}
+                id="estwaitday"
+                register={register("estwaitday")}
+                message={errors?.estwaitday?.message}
+              />
+            </div>
+          )}
+          {selectedCommand === "Finish" && (
+            <div>
+              <Input
+                label={"Id"}
+                register={register("idFinish")}
+                message={errors?.idFinish?.message}
+              />
+              <Input
+                label={"Congrat Message"}
+                id="congratmessage"
+                register={register("congratmessage")}
+                message={errors?.congratmessage?.message}
+              />
+            </div>
+          )}
+          {selectedCommand === "Assign" && (
+            <div>
+              <Input
+                label={"Id"}
+                register={register("idAssign")}
+                message={errors?.idAssign?.message}
+              />
+              <Input
+                label={"Assign"}
+                id="assign"
+                register={register("assignTo")}
+                message={errors?.assignTo?.message}
               />
             </div>
           )}

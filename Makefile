@@ -19,5 +19,8 @@ client1:
 client2:
 	go run ./cmd/client/main.go send -k ccdfc76922c6c4760847b5f4d5dc3bf1bfa1664e1106aa55c2ac013c68049401
 
+client3:
+	go run ./cmd/client/main.go send -k b3ee1db16d0d8a59bace334e064eafb749290a32972e1d105ccd979b287410a8
+
 test:
 	go test -v ./...

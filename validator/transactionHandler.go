@@ -10,16 +10,12 @@ import (
 )
 
 func HandleTypeTransaction(v *Validator, message map[string]interface{}) {
-	fmt.Println(message)
-	fmt.Println("hehe")
 	var lastBlockHashFromMessage string
 	publicKeyStr := message["publicKey"].(string)
 	signatureStr := message["signature"].(string)
 
 	publicKey := crypto.PublicKeyFromString(publicKeyStr)
 	signature := crypto.SignatureFromString(signatureStr)
-	fmt.Println("publicKey", publicKey)
-	fmt.Println("signature", signature)
 
 	data := message["data"].(string)
 
