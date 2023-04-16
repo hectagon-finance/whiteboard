@@ -1,5 +1,9 @@
 # Welcome to whiteboard chain
 
+## What we build ?
+
+- We build an appchain with simple logic like a todo app to help everyone understand how a blockchain works
+
 ## How to run ?
 
 ### Step 1: Run validator

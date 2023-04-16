@@ -159,6 +159,9 @@ func logic(block types.Block) []byte {
 			fmt.Println("\nstart")
 			var startInstrucion *StartInstruction
 			err = json.Unmarshal(ins.Data, &startInstrucion)
+			if err != nil {
+				log.Println(err)
+			}
 			if err == nil {
 				t := findTask(tasks, startInstrucion.Id)
 				fmt.Println(t)
@@ -249,6 +252,9 @@ func findTask(tasks []Task, Id string) *Task {
 
 func ClientReadHandler() {
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		// write json to response\
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

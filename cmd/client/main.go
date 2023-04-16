@@ -74,22 +74,22 @@ func main() {
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
 			// ins := validator.Instruction{
 			// 	C:    "Create",
-			// 	Data: []byte(`{"Id":"1","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
+			// 	Data: []byte(`{"Id":"2","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
+			// }
+
+			// ins := validator.Instruction{
+			// 	C:    "Finish",
+			// 	Data: []byte(`{"Id":"3","CongratMessage":"Congratulation,"From":"` + address + `"}`),
 			// }
 
 			ins := validator.Instruction{
-				C:    "Finish",
-				Data: []byte(`{"Id":"3","CongratMessage":"Congratulation,"From":"` + address + `"}`),
+				C:    "Start",
+				Data: []byte(`{"Id":"1","EstDayToFinish":2,"From":"` + address + `"}`),
 			}
 
 			// ins := validator.Instruction{
-			// 	C:    "Start",
-			// 	Data: []byte(`{"Id":"2","EstDayToFinish":2,"From":"` + address + `"}`),
-			// }
-
-			// ins := validator.Instruction{
 			// 	C:    "Paused",
-			// 	Data: []byte(`{"Id":"6","EstWaitDay":2}`),
+			// 	Data: []byte(`{"Id":"6","EstWaitDay":2,"From":"` + address + `"}`),
 			// }
 
 			// ins := validator.Instruction{
@@ -99,7 +99,7 @@ func main() {
 
 			// ins := validator.Instruction{
 			// 	C:    "Stop",
-			// 	Data: []byte(`{"Id":"2","Reason":"Reason3"}`),
+			// 	Data: []byte(`{"Id":"2","Reason":"Reason3","From":"` + address + `"}`),
 			// }
 
 			log.Println(ins.C)
@@ -175,8 +175,6 @@ func sendTransaction(validatorId string, tx Transaction) {
 		"signature":     signatureStr,
 		"data":          string(tx.Data),
 	}
-
-	fmt.Println("message", message)
 
 	msg, err := json.Marshal(message)
 	if err != nil {
