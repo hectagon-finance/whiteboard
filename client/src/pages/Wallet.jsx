@@ -56,7 +56,7 @@ function Wallet() {
       .update(publicKey)
       .digest("hex")
       .substring(30);
-    const walletAddress = "hectagon" + publicKeyHash;
+    const walletAddress = "whiteboard" + publicKeyHash;
     return walletAddress;
   }
 

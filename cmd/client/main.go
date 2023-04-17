@@ -71,7 +71,6 @@ func main() {
 			privateKey := crypto.PrivateKeyFromString(os.Args[3], publicKeyForConvert)
 			address := publicKey.Address().String()
 
-			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
 			ins := validator.Instruction{
 				C:    "Create",
 				Data: []byte(`{"Id":"6","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),

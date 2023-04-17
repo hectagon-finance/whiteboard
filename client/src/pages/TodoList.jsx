@@ -61,6 +61,7 @@ const TodoList = () => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [dataTasks, setDataTasks] = useState([]);
+  const port = 9000;
 
   useEffect(() => {
     switch (schema) {
@@ -88,7 +89,7 @@ const TodoList = () => {
   }, [schema]);
 
   useEffect(() => {
-    const ws = new WebSocket.w3cwebsocket("ws://localhost:9000/ws");
+    const ws = new WebSocket.w3cwebsocket(`ws://localhost:${port}/ws`);
     setSocket(ws);
     if (location.state) {
       setPublicKey(location.state.publicKey);
@@ -114,7 +115,7 @@ const TodoList = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:19000/get");
+      const response = await fetch(`http://localhost:1${port}/get`);
       console.log(response);
       const data = await response.json();
       console.log("data", data);
@@ -128,7 +129,7 @@ const TodoList = () => {
   };
 
   const handleSubmitForm = (valueFields) => {
-    const ws = new WebSocket.w3cwebsocket("ws://localhost:9000/ws");
+    const ws = new WebSocket.w3cwebsocket(`ws://localhost:${port}/ws`);
     setSocket(ws);
 
     console.log("===============send");
@@ -238,14 +239,15 @@ const TodoList = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-yellow-200	">
+    <div className="flex flex-col items-center justify-center h-screen bg-yellow-200">
       <Select
         listCommands={Command}
         selectedCommand={selectedCommand}
         onCommandChange={handleCommandChange}
       />
+      <p>Connecting to validator with port: {port} </p>
       <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full md:w-3/4 lg:w-4/6 mx-auto mt-[30px]">
-        <div className="bg-white p-10 rounded-lg shadow md:w-full lg:w-4/6">
+        <div className="bg-white p-10 rounded-lg shadow md:w-full lg:w-4/6 max-h-[70vh]">
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             {selectedCommand === "Create" && (
               <div>
