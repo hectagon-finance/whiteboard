@@ -72,20 +72,20 @@ func main() {
 			address := publicKey.Address().String()
 
 			// jsonString := `{"C": "Create","Data":{"eyJEZXNjIjoiRGVzY3JpcHRpb24xIiwiVGl0bGUiOiJUaXRsZTEifQ=="}}`
-			// ins := validator.Instruction{
-			// 	C:    "Create",
-			// 	Data: []byte(`{"Id":"2","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
-			// }
+			ins := validator.Instruction{
+				C:    "Create",
+				Data: []byte(`{"Id":"6","Desc":"Description1","Title":"Title1","From":"` + address + `"}`),
+			}
 
 			// ins := validator.Instruction{
 			// 	C:    "Finish",
 			// 	Data: []byte(`{"Id":"3","CongratMessage":"Congratulation,"From":"` + address + `"}`),
 			// }
 
-			ins := validator.Instruction{
-				C:    "Start",
-				Data: []byte(`{"Id":"1","EstDayToFinish":2,"From":"` + address + `"}`),
-			}
+			// ins := validator.Instruction{
+			// 	C:    "Start",
+			// 	Data: []byte(`{"Id":"1","EstDayToFinish":2,"From":"` + address + `"}`),
+			// }
 
 			// ins := validator.Instruction{
 			// 	C:    "Paused",

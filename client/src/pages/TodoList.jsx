@@ -60,7 +60,7 @@ const TodoList = () => {
   const [selectedCommand, setSelectedCommand] = useState("Create");
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [base64Data, setBase64Data] = useState(null);
+  const [dataTasks, setDataTasks] = useState([]);
 
   useEffect(() => {
     switch (schema) {
@@ -114,10 +114,14 @@ const TodoList = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:18080/get");
-      const data = await response.text();
+      const response = await fetch("http://localhost:19000/get");
+      console.log(response);
+      const data = await response.json();
       console.log("data", data);
-      setBase64Data(data);
+      let decodeData = atob(data);
+      let jsonData = JSON.parse(decodeData);
+      console.log("jsonData", jsonData);
+      setDataTasks(jsonData);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -234,116 +238,140 @@ const TodoList = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center h-screen bg-yellow-200	">
       <Select
         listCommands={Command}
         selectedCommand={selectedCommand}
         onCommandChange={handleCommandChange}
       />
-      <div className="bg-white p-10 rounded-lg shadow md:w-3/4 mx-auto lg:w-1/2 mt-[30px]">
-        <form onSubmit={handleSubmit(handleSubmitForm)}>
-          {selectedCommand === "Create" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idCreate")}
-                message={errors?.idCreate?.message}
-              />
-              <Input
-                label={"Description"}
-                id="description"
-                register={register("description")}
-                message={errors?.description?.message}
-              />
-              <Input
-                label={"Title"}
-                id="title"
-                register={register("title")}
-                message={errors?.title?.message}
-              />
+      <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full md:w-3/4 lg:w-4/6 mx-auto mt-[30px]">
+        <div className="bg-white p-10 rounded-lg shadow md:w-full lg:w-4/6">
+          <form onSubmit={handleSubmit(handleSubmitForm)}>
+            {selectedCommand === "Create" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idCreate")}
+                  message={errors?.idCreate?.message}
+                />
+                <Input
+                  label={"Description"}
+                  id="description"
+                  register={register("description")}
+                  message={errors?.description?.message}
+                />
+                <Input
+                  label={"Title"}
+                  id="title"
+                  register={register("title")}
+                  message={errors?.title?.message}
+                />
+              </div>
+            )}
+            {selectedCommand === "Start" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idStart")}
+                  message={errors?.idStart?.message}
+                />
+                <Input
+                  label={"Est Day To Finish"}
+                  id="estdaytofinish"
+                  register={register("estdaytofinish")}
+                  message={errors?.estdaytofinish?.message}
+                />
+              </div>
+            )}
+            {selectedCommand === "Stop" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idStop")}
+                  message={errors?.idStop?.message}
+                />
+                <Input
+                  label={"Reason"}
+                  id="reason"
+                  register={register("reason")}
+                  message={errors?.reason?.message}
+                />
+              </div>
+            )}
+            {selectedCommand === "Pause" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idPause")}
+                  message={errors?.idPause?.message}
+                />
+                <Input
+                  label={"Est Wait Day"}
+                  id="estwaitday"
+                  register={register("estwaitday")}
+                  message={errors?.estwaitday?.message}
+                />
+              </div>
+            )}
+            {selectedCommand === "Finish" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idFinish")}
+                  message={errors?.idFinish?.message}
+                />
+                <Input
+                  label={"Congrat Message"}
+                  id="congratmessage"
+                  register={register("congratmessage")}
+                  message={errors?.congratmessage?.message}
+                />
+              </div>
+            )}
+            {selectedCommand === "Assign" && (
+              <div>
+                <Input
+                  label={"Id"}
+                  register={register("idAssign")}
+                  message={errors?.idAssign?.message}
+                />
+                <Input
+                  label={"Assign"}
+                  id="assign"
+                  register={register("assignTo")}
+                  message={errors?.assignTo?.message}
+                />
+              </div>
+            )}
+            <button className="block w-full bg-blue-500 text-white font-bold p-4 rounded-lg">
+              Submit
+            </button>
+          </form>
+        </div>
+        <div className="space-y-4 w-full overflow-y-auto max-h-[70vh]">
+          <h1 className="font-bold text-gray-800">List all tasks:</h1>
+          {dataTasks && dataTasks.length > 0 ? (
+            dataTasks.map((task) => (
+              <div
+                key={task.id}
+                className="bg-blue-100 p-4 rounded-lg shadow-md"
+              >
+                <h2 className="text-lg font-bold text-blue-800">
+                  Task Id: {task.Id}
+                </h2>
+                <p className="text-blue-700">Title: {task.Title}</p>
+                <p className="text-blue-700">Description: {task.Desc}</p>
+                <p className="text-blue-700">Status: {task.Status}</p>
+                <p className="text-blue-700">Owner: {task.Owner}</p>
+              </div>
+            ))
+          ) : (
+            <div className="bg-blue-100 p-4 rounded-lg shadow-md">
+              <p className="text-blue-700">There are no tasks.</p>
             </div>
           )}
-          {selectedCommand === "Start" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idStart")}
-                message={errors?.idStart?.message}
-              />
-              <Input
-                label={"Est Day To Finish"}
-                id="estdaytofinish"
-                register={register("estdaytofinish")}
-                message={errors?.estdaytofinish?.message}
-              />
-            </div>
-          )}
-          {selectedCommand === "Stop" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idStop")}
-                message={errors?.idStop?.message}
-              />
-              <Input
-                label={"Reason"}
-                id="reason"
-                register={register("reason")}
-                message={errors?.reason?.message}
-              />
-            </div>
-          )}
-          {selectedCommand === "Pause" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idPause")}
-                message={errors?.idPause?.message}
-              />
-              <Input
-                label={"Est Wait Day"}
-                id="estwaitday"
-                register={register("estwaitday")}
-                message={errors?.estwaitday?.message}
-              />
-            </div>
-          )}
-          {selectedCommand === "Finish" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idFinish")}
-                message={errors?.idFinish?.message}
-              />
-              <Input
-                label={"Congrat Message"}
-                id="congratmessage"
-                register={register("congratmessage")}
-                message={errors?.congratmessage?.message}
-              />
-            </div>
-          )}
-          {selectedCommand === "Assign" && (
-            <div>
-              <Input
-                label={"Id"}
-                register={register("idAssign")}
-                message={errors?.idAssign?.message}
-              />
-              <Input
-                label={"Assign"}
-                id="assign"
-                register={register("assignTo")}
-                message={errors?.assignTo?.message}
-              />
-            </div>
-          )}
-          <button className="block w-full bg-blue-500 text-white font-bold p-4 rounded-lg">
-            Submit
-          </button>
-        </form>
+        </div>
       </div>
-      <div>{base64Data && <p>{base64Data}</p>}</div>
     </div>
   );
 };
