@@ -88,10 +88,13 @@ func Logic() {
 	mem, _ = json.Marshal(haha)
 
 	for {
-		block := <-Chan_Block
-		// fmt.Println("block:", block)
-		mem = logic(block)
-		log.Println("mem:", string(mem))
+		select {
+
+		case block := <-Chan_Block:
+			// fmt.Println("block:", block)
+			mem = logic(block)
+			log.Println("mem:", string(mem))
+		}
 	}
 }
 
@@ -180,7 +183,7 @@ func logic(block types.Block) []byte {
 			if err == nil {
 				t := findTask(tasks, stopInstrucion.Id)
 				fmt.Println(t)
-				if t != nil && t.Status != Finished && stopInstrucion.From == t.Owner {
+				if t != nil && t.Status != Finished && t.Status != JustCreated && stopInstrucion.From == t.Owner {
 					t.Status = Stopped
 					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Stop Task #%s(%s), because of %s", t.Id, t.Title, stopInstrucion.Reason))
 					newMem, _ = json.Marshal(tasks)
@@ -208,7 +211,7 @@ func logic(block types.Block) []byte {
 			if err == nil {
 				t := findTask(tasks, finishInstrucion.Id)
 				fmt.Println(t)
-				if t != nil && t.Status != Stopped && finishInstrucion.From == t.Owner {
+				if t != nil && t.Status != Stopped && t.Status != JustCreated && finishInstrucion.From == t.Owner {
 					t.Status = Finished
 					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Finish Task #%s(%s). %s", t.Id, t.Title, finishInstrucion.CongratMessage))
 					newMem, _ = json.Marshal(tasks)

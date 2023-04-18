@@ -15,6 +15,7 @@ func ClientHandler(v *Validator, is_genesis string) {
 	if is_genesis != "genesis" {
 		u := url.URL{Scheme: "ws", Host: "localhost:" + is_genesis, Path: "/ws"}
 		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		defer conn.Close()
 		if err != nil {
 			log.Fatal("dial:", err)
 		}
@@ -30,7 +31,7 @@ func ClientHandler(v *Validator, is_genesis string) {
 		}
 		log.Println("Sending sync all request from", Port, "to", is_genesis)
 		conn.WriteMessage(websocket.TextMessage, msgByte)
-		conn.Close()
+
 	}
 	fmt.Println("Server is running on port: ", Port)
 	flag.Parse()

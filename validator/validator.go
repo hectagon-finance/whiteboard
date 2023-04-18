@@ -68,11 +68,11 @@ func (v *Validator) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c, err := upgrader.Upgrade(w, r, nil)
+	defer c.Close()
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
 	}
-	defer c.Close()
 	for {
 		_, message, err := c.ReadMessage()
 		if err != nil {
