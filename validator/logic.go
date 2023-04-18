@@ -144,14 +144,11 @@ func logic(block types.Block) []byte {
 			var assignInstruction *AssignInstruction
 			err = json.Unmarshal(ins.Data, &assignInstruction)
 			if err == nil {
-				fmt.Println("Running")
 				t := findTask(tasks, assignInstruction.Id)
 				fmt.Println(t)
 				fmt.Println("owner", t.Owner)
 				fmt.Println("from", assignInstruction.From)
-				fmt.Println("Running2")
 				if t != nil && t.Owner == assignInstruction.From {
-					fmt.Println("Running3")
 					t.Handler = append(t.Handler, assignInstruction.AssignTo)
 					emitEvent(blockHash, trans.TransactionId, fmt.Sprintf("Assign Task %s For{%s}", assignInstruction.Id, assignInstruction.AssignTo))
 					newMem, _ = json.Marshal(tasks)

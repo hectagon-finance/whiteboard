@@ -64,29 +64,18 @@ const TodoList = () => {
   const port = 9000;
 
   useEffect(() => {
-    switch (schema) {
-      case "Create":
-        setSchema(schemaCreate);
-        break;
-      case "Start":
-        setSchema(schemaStart);
-        break;
-      case "Stop":
-        setSchema(schemaStop);
-        break;
-      case "Pause":
-        setSchema(schemaPause);
-        break;
-      case "Finish":
-        setSchema(schemaFinish);
-        break;
-      case "Assign":
-        setSchema(schemaAssign);
-        break;
-      default:
-        break;
-    }
-  }, [schema]);
+    if (selectedCommand === "Create") setSchema(schemaCreate);
+
+    if (selectedCommand === "Start") setSchema(schemaStart);
+
+    if (selectedCommand === "Stop") setSchema(schemaStop);
+
+    if (selectedCommand === "Pause") setSchema(schemaPause);
+
+    if (selectedCommand === "Finish") setSchema(schemaFinish);
+
+    if (selectedCommand === "Assign") setSchema(schemaAssign);
+  }, [selectedCommand]);
 
   useEffect(() => {
     const ws = new WebSocket.w3cwebsocket(`ws://localhost:${port}/ws`);
