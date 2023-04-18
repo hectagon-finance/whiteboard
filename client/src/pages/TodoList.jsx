@@ -49,6 +49,7 @@ const TodoList = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({
     mode: "onChange",
@@ -121,7 +122,7 @@ const TodoList = () => {
     const ws = new WebSocket.w3cwebsocket(`ws://localhost:${port}/ws`);
     setSocket(ws);
 
-    console.log("===============send");
+    console.log("=====send=====");
     const keyPair = ec.keyFromPrivate(location.state.privateKey, "hex");
 
     let instructionData;
@@ -216,6 +217,8 @@ const TodoList = () => {
       console.error("WebSocket not connected");
     }
 
+    reset();
+
     // Delay fetchData() by 2 seconds
     setTimeout(() => {
       fetchData();
@@ -235,8 +238,9 @@ const TodoList = () => {
         onCommandChange={handleCommandChange}
       />
       <p>Connecting to validator with port: {port} </p>
-      <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full md:w-3/4 lg:w-4/6 mx-auto mt-[30px]">
-        <div className="bg-white p-10 rounded-lg shadow md:w-full lg:w-4/6 max-h-[70vh]">
+      <p>Your address is: {walletAddress}</p>
+      <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 w-full md:w-3/4 lg:w-4/6 mt-[30px]">
+        <div className="bg-white p-10 rounded-lg shadow md:w-full lg:w-4/6 lg:max-h-[50vh]">
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             {selectedCommand === "Create" && (
               <div>
@@ -339,7 +343,7 @@ const TodoList = () => {
             </button>
           </form>
         </div>
-        <div className="space-y-4 w-full overflow-y-auto max-h-[70vh]">
+        <div className="space-y-4 w-full overflow-y-auto lg:max-h-[50vh]">
           <h1 className="font-bold text-gray-800">List all tasks:</h1>
           {dataTasks && dataTasks.length > 0 ? (
             dataTasks.map((task) => (

@@ -11,7 +11,9 @@
 
 ## Appchain consensus mechanism
 
-- It's pretty simple. When a validator receives 3 input commands into the mempool they will create a block hash and broadcast to other validators for consensus.
+- Validators gossip with each other by using websocket. The transaction is sent to a validator, the validator verifies whether the signed transaction is valid or not based on the client's signature, original data, and public key. If the transaction is valid it will broadcast to other validators. When a validator receives a transaction from another validator it checks to see if the transaction is already in the mempool. If the transaction is not already in the mempool, it will add the transaction to its own mempool.
+
+- It's pretty simple. When a validator receives 3 input commands into the mempool they will create a block hash and broadcast to other validators for consensus. So client have to send 3 valid transaction to validator can create block.
 
 ## How to run ?
 
@@ -58,7 +60,7 @@ Try "make client1" or
 "go run main.go send "Hello" -k 8df4135ecefc9a4d054e2c596cd3f56432e683431b27216fea917b01c8ef1fee"
 ```
 
-\*Note: After -k is the user's private key. This private key and the public key in file public_key.txt need to be a key pair. You can change them based on the key pairs we prepared in the keypair file
+\*Note: After -k is the user's private key. This private key and the public key in file public_key.txt need to be a key pair. You can change them based on the key pairs we prepared in the keypair file.
 
 It's a bit difficult when you interact using the command line. You need to go to folder cmd/client/main.go, scroll down and you will see the code and some comments, Depending on the command you want to execute, you can uncomment and run "make client1" again.
 
