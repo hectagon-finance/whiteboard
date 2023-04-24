@@ -1,0 +1,30 @@
+package validator
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/url"
+
+	"github.com/gorilla/websocket"
+)
+
+func ConnectAndSendMessage(message map[string]interface{}) {
+	for _, peer := range Peers {
+		if peer != Port {
+			u := url.URL{Scheme: "ws", Host: "localhost:" + peer, Path: "/ws"}
+			conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+			defer conn.Close()
+			if err != nil {
+				fmt.Println("Error connecting to the peer:", err)
+				continue
+			}
+
+			msg, err := json.Marshal(message)
+			if err != nil {
+				fmt.Println("Error marshaling the message:", err)
+				return
+			}
+			conn.WriteMessage(websocket.TextMessage, msg)
+		}
+	}
+}
